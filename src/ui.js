@@ -99,10 +99,11 @@ export function initUI({ onEnter }) {
 
   let activePin = null;
   const pins = [];
-  for (const h of HOTELS) {
+  HOTELS.forEach((h, i) => {
     const el = document.createElement('button');
     el.className = `polaroid ${h.active ? 'active-case' : 'sealed'}`;
     el.style.setProperty('--tilt', h.tilt);
+    el.style.setProperty('--i', i);
     el.style.left = h.pos.left;
     el.style.top = h.pos.top;
     if (!h.active) el.setAttribute('aria-disabled', 'true');
@@ -130,16 +131,17 @@ export function initUI({ onEnter }) {
         el.classList.add('shake');
       }
     });
-  }
+  });
 
   // every sealed case is tied to the one active case
   string.innerHTML = pins
-    .map(([x, y]) => `<line x1="${x}" y1="${y}" x2="${activePin[0]}" y2="${activePin[1]}"/>`)
+    .map(([x, y], i) => `<line style="--i:${i}" x1="${x}" y1="${y}" x2="${activePin[0]}" y2="${activePin[1]}"/>`)
     .join('');
 
   document.getElementById('begin').addEventListener('click', () => {
-    landing.classList.add('gone');
+    // board is revealed behind the page while the camera pushes through it
     cases.hidden = false;
-    requestAnimationFrame(() => cases.classList.remove('gone'));
+    landing.classList.add('leaving');
+    setTimeout(() => { landing.hidden = true; }, 1300);
   });
 }

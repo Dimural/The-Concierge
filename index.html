@@ -34,7 +34,7 @@
 
     /* ------------------------------- landing ------------------------------ */
     .screen {
-      position: fixed; inset: 0; z-index: 10; display: flex;
+      position: fixed; inset: 0; display: flex;
       align-items: center; justify-content: center; overflow: hidden auto;
       background:
         radial-gradient(ellipse 90% 70% at 50% 30%, rgba(58,48,36,0.28), transparent 70%),
@@ -43,26 +43,55 @@
     }
     .screen.gone { opacity: 0; pointer-events: none; }
 
-    #frontpage {
-      position: relative; width: min(680px, 92vw); box-sizing: border-box;
-      padding: clamp(2rem, 5vw, 3.5rem) clamp(1.4rem, 4vw, 3rem) clamp(2.4rem, 5vw, 3.2rem);
-      color: var(--ink); text-align: center; transform: rotate(-0.6deg);
+    /* the landing IS the sheet of newsprint, edge to edge */
+    #landing {
+      z-index: 10; padding: 0; color: var(--ink);
       background:
-        radial-gradient(140% 60% at 50% 0%, rgba(120,96,58,0.25), transparent 60%),
-        radial-gradient(80% 40% at 12% 96%, rgba(97,74,42,0.4), transparent 70%),
-        radial-gradient(50% 30% at 88% 80%, rgba(97,74,42,0.28), transparent 70%),
-        linear-gradient(174deg, var(--paper) 60%, var(--paper-dark));
-      box-shadow: 0 30px 80px rgba(0,0,0,0.9), inset 0 0 60px rgba(60,44,24,0.35);
+        radial-gradient(120% 90% at 50% -10%, rgba(122,98,60,0.35), transparent 55%),
+        radial-gradient(70% 45% at 8% 100%, rgba(90,68,38,0.5), transparent 70%),
+        radial-gradient(55% 35% at 94% 88%, rgba(90,68,38,0.38), transparent 70%),
+        radial-gradient(40% 26% at 78% 12%, rgba(133,105,60,0.3), transparent 70%),
+        linear-gradient(171deg, #ded1ab 0%, var(--paper) 45%, #bfae83 100%);
+      box-shadow: inset 0 0 18vmax rgba(46,33,16,0.55);
+    }
+    /* crinkles: unfolded-crease facets + two long accidental creases */
+    #landing::before {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background:
+        linear-gradient(90deg, transparent 32.4%, rgba(255,250,230,0.2) 33.15%, rgba(41,30,14,0.22) 33.75%, transparent 35%),
+        linear-gradient(90deg, transparent 65.6%, rgba(41,30,14,0.2) 66.4%, rgba(255,250,230,0.17) 67.05%, transparent 68.4%),
+        linear-gradient(180deg, transparent 51.5%, rgba(255,250,230,0.14) 52.4%, rgba(41,30,14,0.2) 53.2%, transparent 54.8%),
+        linear-gradient(113deg, transparent 42%, rgba(255,250,230,0.12) 46%, rgba(41,30,14,0.14) 47.2%, transparent 52%),
+        linear-gradient(67deg, transparent 12%, rgba(41,30,14,0.1) 16%, rgba(255,250,230,0.1) 17.2%, transparent 21%),
+        linear-gradient(158deg, transparent 78%, rgba(41,30,14,0.16) 81%, rgba(255,250,230,0.1) 82%, transparent 85%),
+        conic-gradient(from 200deg at 33.6% 52.8%, rgba(255,250,230,0.08), rgba(41,30,14,0.08), transparent 30%);
+    }
+    /* slow candle-light sweep so the sheet feels lit, not printed on screen */
+    .sheen {
+      position: absolute; inset: -25%; pointer-events: none; mix-blend-mode: soft-light;
+      background: radial-gradient(38% 30% at 50% 45%, rgba(255,236,190,0.85), transparent 65%);
+      animation: sheen-sweep 16s ease-in-out infinite alternate;
+    }
+    @keyframes sheen-sweep {
+      from { transform: translate(-9%, -4%) ; }
+      to { transform: translate(9%, 5%); }
+    }
+
+    #frontpage {
+      position: relative; width: min(1020px, 100vw); box-sizing: border-box;
+      padding: clamp(1.2rem, 3.5vh, 3rem) clamp(1.4rem, 5vw, 4rem);
+      text-align: center;
     }
     .rule { border: none; border-top: 1px solid var(--ink); margin: 0.7rem 0; opacity: 0.8; }
     .rule.double { border-top: 3px double var(--ink); }
     .dateline {
+      display: flex; justify-content: space-between; gap: 1rem;
       font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(0.55rem, 1.6vw, 0.72rem); letter-spacing: 0.28em;
+      font-size: clamp(0.55rem, 1.6vw, 0.74rem); letter-spacing: 0.24em;
     }
     #masthead {
       position: relative; font-family: 'UnifrakturMaguntia', serif; font-weight: normal;
-      font-size: clamp(3.2rem, 11vw, 6.2rem); margin: 1.6rem 0 1.2rem; line-height: 1;
+      font-size: clamp(3.4rem, 13vw, 8.5rem); margin: 2rem 0 1.6rem; line-height: 0.95;
     }
     /* ghost double-strike of the masthead */
     #masthead::before {
@@ -72,33 +101,72 @@
     }
     @keyframes ghost-drift {
       0%, 100% { transform: translate(3px, 2px); opacity: 0.18; }
-      50% { transform: translate(7px, 3px); opacity: 0.08; }
+      50% { transform: translate(8px, 3px); opacity: 0.07; }
     }
     .deck {
       font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(0.7rem, 2vw, 0.9rem); letter-spacing: 0.42em; margin: 1.4rem 0 2.6rem;
+      font-size: clamp(0.72rem, 2vw, 1rem); letter-spacing: 0.46em; text-indent: 0.46em; margin: 1.6rem 0 2.4rem;
     }
     /* smudged, illegible print below the fold */
-    .columns { display: flex; gap: 1.2rem; margin: 1.9rem 0 0; opacity: 0.5; filter: blur(0.6px); }
+    .columns { display: flex; gap: clamp(1rem, 3vw, 2.2rem); margin: 2.4rem 0 0; opacity: 0.55; filter: blur(0.5px); }
     .columns div {
-      flex: 1; height: 74px;
-      background: repeating-linear-gradient(180deg, rgba(28,23,18,0.55) 0 2px, transparent 2px 7px);
-      mask-image: linear-gradient(180deg, #000 30%, transparent);
+      flex: 1; height: clamp(70px, 16vh, 150px);
+      background: repeating-linear-gradient(180deg, rgba(28,23,18,0.5) 0 2px, transparent 2px 7px);
+      mask-image: linear-gradient(180deg, #000 25%, transparent);
+    }
+    /* one column is a blurred evidence photo with a smear where a figure was */
+    .columns .photo {
+      background:
+        radial-gradient(30% 55% at 62% 45%, rgba(233,227,208,0.35), transparent 70%),
+        radial-gradient(90% 90% at 50% 50%, rgba(28,23,18,0.75), rgba(28,23,18,0.9));
+      mask-image: none; filter: blur(0.8px);
     }
     #begin {
       font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(1rem, 2.6vw, 1.25rem); letter-spacing: 0.55em; text-indent: 0.55em;
-      color: var(--blood); border: 3px double var(--blood); padding: 0.85rem 2.4rem;
+      font-size: clamp(1.05rem, 2.6vw, 1.4rem); letter-spacing: 0.55em; text-indent: 0.55em;
+      color: var(--blood); border: 3px double var(--blood); padding: 0.9rem 2.6rem;
       transform: rotate(-1.6deg); opacity: 0.92; position: relative;
       transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
       box-shadow: 0 4px 0 rgba(0,0,0,0.12);
     }
-    #begin:hover, #begin:focus-visible { opacity: 1; transform: rotate(-1.6deg) scale(1.03); }
-    #begin:active { transform: rotate(-1.6deg) scale(0.96) translateY(3px); box-shadow: none; }
+    #begin:hover, #begin:focus-visible { opacity: 1; transform: rotate(-1.6deg) scale(1.04); }
+    #begin:active { transform: rotate(-1.6deg) scale(0.95) translateY(3px); box-shadow: none; }
     #begin:focus-visible { outline: 2px dashed var(--blood); outline-offset: 5px; }
 
+    /* staged wake-up on load */
+    #frontpage > * { animation: settle 0.9s ease backwards; }
+    #frontpage > :nth-child(1) { animation-delay: 0.15s; }
+    #frontpage > :nth-child(2) { animation-delay: 0.3s; }
+    #frontpage > :nth-child(3) { animation-delay: 0.45s; }
+    #frontpage > :nth-child(4) { animation-delay: 0.75s; }
+    #frontpage > :nth-child(5) { animation-delay: 0.95s; }
+    #frontpage > :nth-child(6) { animation-delay: 1.25s; }
+    #frontpage > :nth-child(7) { animation-delay: 1.45s; }
+    @keyframes settle {
+      from { opacity: 0; transform: translateY(9px); filter: blur(3px); }
+      to { opacity: 1; transform: none; filter: none; }
+    }
+
+    /* pressing BEGIN: the camera pushes through the page into the dark */
+    #landing.leaving {
+      animation: paper-through 1.25s ease-in forwards; pointer-events: none;
+    }
+    @keyframes paper-through {
+      0% { transform: none; opacity: 1; filter: none; }
+      60% { opacity: 1; }
+      100% { transform: scale(1.9) rotate(1.6deg); opacity: 0; filter: blur(10px) brightness(0.6); }
+    }
+
     /* ------------------------------ case board ---------------------------- */
-    #cases { flex-direction: column; gap: 1rem; }
+    #cases { z-index: 9; flex-direction: column; gap: 1rem; }
+    /* polaroids drop onto the board one by one after the page gives way */
+    .polaroid { animation: drop-in 0.7s cubic-bezier(0.2, 1.35, 0.4, 1) backwards; animation-delay: calc(0.55s + var(--i) * 0.15s); }
+    @keyframes drop-in {
+      from { opacity: 0; transform: rotate(var(--tilt)) translateY(-52px); }
+      to { opacity: 1; transform: rotate(var(--tilt)); }
+    }
+    #string line { stroke-dasharray: 130; stroke-dashoffset: 130; animation: thread 0.9s ease forwards; animation-delay: calc(1.7s + var(--i, 0) * 0.12s); }
+    @keyframes thread { to { stroke-dashoffset: 0; } }
     #cases header {
       color: var(--bone); text-align: center;
       font-family: 'Special Elite', 'Courier New', monospace; letter-spacing: 0.5em;
@@ -173,7 +241,10 @@
     @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
     @media (prefers-reduced-motion: reduce) {
-      #masthead::before, .active-case .stamp, #overlay .enter { animation: none; }
+      #masthead::before, .active-case .stamp, #overlay .enter, .sheen,
+      #frontpage > *, .polaroid, #string line, #landing.leaving { animation: none; }
+      #string line { stroke-dashoffset: 0; }
+      #landing.leaving { opacity: 0; transition: opacity 0.4s; }
       .polaroid, #begin { transition: none; }
     }
   </style>
@@ -190,19 +261,20 @@
     </div>
   </div>
 
-  <section id="landing" class="screen">
-    <article id="frontpage" class="grain">
-      <div class="dateline">TORONTO &nbsp;&bull;&nbsp; LATE EDITION &nbsp;&bull;&nbsp; EST. 1929</div>
+  <section id="landing" class="screen grain">
+    <div class="sheen" aria-hidden="true"></div>
+    <article id="frontpage">
+      <div class="dateline"><span>VOL. XCVII &middot; No. 13</span><span>TORONTO &mdash; LATE EDITION</span><span>EST. 1929</span></div>
       <hr class="rule double" />
       <h1 id="masthead" data-text="The Concierge">The Concierge</h1>
       <hr class="rule" />
       <p class="deck">THE HOTELS REMEMBER.</p>
       <button id="begin" autofocus>BEGIN</button>
-      <div class="columns" aria-hidden="true"><div></div><div></div><div></div></div>
+      <div class="columns" aria-hidden="true"><div></div><div class="photo"></div><div></div><div></div></div>
     </article>
   </section>
 
-  <section id="cases" class="screen gone" hidden>
+  <section id="cases" class="screen" hidden>
     <header>CASE FILES<small>SELECT ONE</small></header>
     <div id="board">
       <svg id="string" viewBox="0 0 100 62" preserveAspectRatio="none" aria-hidden="true"></svg>
