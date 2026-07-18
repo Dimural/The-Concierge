@@ -173,7 +173,8 @@ export function makeLighting(scene) {
       aimDir.lerp(wantDir, Math.min(1, dt * 9)).normalize();
       const right = new THREE.Vector3().crossVectors(wantDir, camera.up).normalize();
       flashlight.position.copy(camera.position).addScaledVector(right, 0.55).add(new THREE.Vector3(0, -0.65, 0));
-      flashTarget.position.copy(flashlight.position).addScaledVector(aimDir, 40);
+      // slight downward bias so the beam edge grazes the floor ahead of the player
+      flashTarget.position.copy(flashlight.position).addScaledVector(aimDir, 40).add(new THREE.Vector3(0, -3.5, 0));
       const dip = vnoise(t * 2.3) > 0.94 ? 0.35 + 0.4 * vnoise(t * 55) : 1;
       flashlight.intensity = flashOn ? 1250 * dip : 0;
     },

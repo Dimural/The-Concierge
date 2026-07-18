@@ -26,6 +26,10 @@ export class Player {
     this.eye = STAND_EYE;
     this.grounded = false;
     this.bobPhase = 0;
+    this.stepAccum = 0;
+    this.landDip = 0;
+    this.onFootstep = null; // (running: bool) => void
+    this.onLand = null; // (fallSpeed: number) => void
     this.keys = new Set();
   }
 
@@ -109,6 +113,10 @@ export class Player {
     if (hitY) {
       if (this.vel.y <= 0 && hitY.y1 <= this.pos.y + STEP_UP) {
         ny = hitY.y1; // land
+        if (!this.grounded && this.vel.y < -8) {
+          this.landDip = Math.min(0.6, -this.vel.y * 0.022);
+          this.onLand?.(-this.vel.y);
+        }
         this.vel.y = 0;
         this.grounded = true;
       } else {
@@ -135,21 +143,33 @@ export class Player {
       }
     }
 
-    // head bob + camera
+    // head bob + footstep cycle + camera
     const hSpeed = Math.hypot(this.vel.x, this.vel.z);
-    if (this.grounded && hSpeed > 0.5) {
-      this.bobPhase += dt * (running ? 11 : 7.5);
+    const moving = this.grounded && hSpeed > 0.5;
+    if (moving) {
+      const freq = this.prone ? 5 : running ? 13 : 9.5;
+      const dPhase = dt * freq;
+      this.bobPhase += dPhase;
+      this.stepAccum += dPhase;
+      if (this.stepAccum >= Math.PI) {
+        this.stepAccum -= Math.PI;
+        if (!this.prone) this.onFootstep?.(running);
+      }
     } else {
       this.bobPhase *= 1 - Math.min(1, dt * 4);
+      this.stepAccum = Math.PI * 0.6; // next step lands shortly after moving again
     }
-    const bob = Math.sin(this.bobPhase) * (running ? 0.14 : 0.07) * Math.min(1, hSpeed / WALK);
+    this.landDip *= 1 - Math.min(1, dt * 7);
+    const bobAmp = this.prone ? 0.05 : running ? 0.24 : 0.13;
+    const bob = Math.sin(this.bobPhase) * bobAmp * Math.min(1, hSpeed / WALK);
     const breathe = Math.sin(performance.now() * 0.0012) * 0.02;
 
-    this.camera.position.set(this.pos.x, this.pos.y + this.eye + bob + breathe, this.pos.z);
+    this.camera.position.set(this.pos.x, this.pos.y + this.eye + bob + breathe - this.landDip, this.pos.z);
     this.camera.rotation.order = 'YXZ';
     this.camera.rotation.y = this.yaw;
     this.camera.rotation.x = this.pitch;
-    this.camera.rotation.z = Math.sin(this.bobPhase * 0.5) * 0.004;
+    // gentle roll from the gait plus a lean into strafe
+    this.camera.rotation.z = Math.sin(this.bobPhase * 0.5) * 0.006 - st * Math.min(1, hSpeed / WALK) * 0.012;
 
     // safety: fell out of the world -> respawn at current floor height
     if (this.pos.y < -80) { this.pos.set(118, 0, 121.4); this.vel.set(0, 0, 0); }

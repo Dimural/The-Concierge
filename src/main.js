@@ -6,6 +6,7 @@ import { buildFloor, buildEscalator, buildOval } from './world.js';
 import { buildProps } from './props.js';
 import { makeLighting } from './lights.js';
 import { Player } from './player.js';
+import { initAudio, footstep, landThump } from './audio.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -20,7 +21,7 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x030507);
 scene.fog = new THREE.FogExp2(0x030507, 0.016);
 
-const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 500);
+const camera = new THREE.PerspectiveCamera(64, window.innerWidth / window.innerHeight, 0.1, 500);
 
 // --- build the hotel
 const mats = makeMaterials();
@@ -44,6 +45,8 @@ for (const build of [buildEscalator, buildOval]) {
 
 const lighting = makeLighting(scene);
 const player = new Player(camera, colliders, SPAWN);
+player.onFootstep = footstep;
+player.onLand = landThump;
 camera.position.set(SPAWN.x, SPAWN.y + 5.4, SPAWN.z);
 camera.rotation.order = 'YXZ';
 camera.rotation.y = SPAWN.yaw;
@@ -62,7 +65,10 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('keyup', (e) => input.keys.delete(e.code));
 
-overlay.addEventListener('click', () => renderer.domElement.requestPointerLock());
+overlay.addEventListener('click', () => {
+  initAudio();
+  renderer.domElement.requestPointerLock();
+});
 document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === renderer.domElement;
   overlay.style.display = locked ? 'none' : 'flex';
