@@ -226,10 +226,14 @@ export function makeMaterials() {
   return {
     wall: new THREE.MeshStandardMaterial({ map: rep(wallpaper, 0.14, 0.1), roughness: 0.92 }),
     shellWall: new THREE.MeshStandardMaterial({ map: rep(plaster, 0.08, 0.08), color: 0x9a9285, roughness: 0.95 }),
-    corridorFloor: new THREE.MeshStandardMaterial({ map: rep(corridor, 0.09, 0.09), roughness: 0.97 }),
+    // floor-slab materials are DoubleSide: the slab ShapeGeometry is rotated
+    // from the XY plane and its faces wind downward, so single-sided slabs
+    // would be invisible from above (three.js flips backface normals, so
+    // lighting stays correct).
+    corridorFloor: new THREE.MeshStandardMaterial({ map: rep(corridor, 0.09, 0.09), roughness: 0.97, side: THREE.DoubleSide }),
     roomCarpet: new THREE.MeshStandardMaterial({ map: rep(carpet, 0.08, 0.08), roughness: 0.97 }),
     wood: new THREE.MeshStandardMaterial({ map: rep(wood, 0.1, 0.1), roughness: 0.6 }),
-    marble: new THREE.MeshStandardMaterial({ map: rep(marble, 0.11, 0.11), roughness: 0.35, metalness: 0.05 }),
+    marble: new THREE.MeshStandardMaterial({ map: rep(marble, 0.11, 0.11), roughness: 0.35, metalness: 0.05, side: THREE.DoubleSide }),
     tile: new THREE.MeshStandardMaterial({ map: rep(tile, 0.2, 0.2), roughness: 0.5 }),
     ceiling: new THREE.MeshStandardMaterial({ map: rep(ceilTile, 0.25, 0.25), roughness: 0.95, side: THREE.DoubleSide }),
     plasterCeiling: new THREE.MeshStandardMaterial({ map: rep(plaster, 0.1, 0.1), color: 0x7a746a, roughness: 0.95, side: THREE.DoubleSide }),
