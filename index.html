@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Concierge — Fairmont Royal York</title>
+  <style>
+    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+    #app canvas { display: block; }
+    #vignette {
+      position: fixed; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
+    }
+    #overlay {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1.2rem;
+      background: rgba(0, 0, 0, 0.82); color: #b8a888; cursor: pointer;
+      font-family: Georgia, 'Times New Roman', serif; user-select: none;
+      text-align: center;
+    }
+    #overlay h1 { font-size: 2rem; font-weight: normal; letter-spacing: 0.5em; margin: 0; }
+    #overlay h2 { font-size: 0.85rem; font-weight: normal; letter-spacing: 0.25em; margin: 0; color: #6e6350; }
+    #overlay .enter { margin-top: 2rem; font-size: 0.95rem; letter-spacing: 0.35em; animation: pulse 2.4s infinite; }
+    #overlay .keys { font-size: 0.72rem; letter-spacing: 0.12em; color: #55503f; line-height: 1.9; }
+    @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+  <div id="vignette"></div>
+  <div id="overlay">
+    <h1>THE CONCIERGE</h1>
+    <h2>FAIRMONT ROYAL YORK &mdash; MEZZANINE &amp; CONVENTION FLOOR</h2>
+    <div class="enter">CLICK TO ENTER</div>
+    <div class="keys">
+      WASD MOVE &middot; MOUSE LOOK &middot; SHIFT RUN &middot; SPACE JUMP<br />
+      C LIE DOWN &middot; F FLASHLIGHT &middot; ESC RELEASE
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
