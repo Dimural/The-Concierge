@@ -7,6 +7,7 @@ import { buildProps } from './props.js';
 import { makeLighting } from './lights.js';
 import { Player } from './player.js';
 import { initAudio, footstep, landThump } from './audio.js';
+import { initUI } from './ui.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -65,13 +66,17 @@ document.addEventListener('keydown', (e) => {
 });
 document.addEventListener('keyup', (e) => input.keys.delete(e.code));
 
-overlay.addEventListener('click', () => {
+let started = false;
+function enterGame() {
+  started = true;
   initAudio();
   renderer.domElement.requestPointerLock();
-});
+}
+initUI({ onEnter: enterGame });
+overlay.addEventListener('click', enterGame);
 document.addEventListener('pointerlockchange', () => {
   const locked = document.pointerLockElement === renderer.domElement;
-  overlay.style.display = locked ? 'none' : 'flex';
+  overlay.classList.toggle('shown', started && !locked);
   if (!locked) input.keys.clear();
 });
 document.addEventListener('mousemove', (e) => {

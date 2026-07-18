@@ -3,40 +3,213 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>The Concierge — Fairmont Royal York</title>
+  <title>The Concierge</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Special+Elite&family=Caveat:wght@600&display=swap" rel="stylesheet" />
   <style>
-    html, body { margin: 0; height: 100%; overflow: hidden; background: #000; }
+    :root {
+      --void: #070605;
+      --paper: #d6c9a3;
+      --paper-dark: #b3a47c;
+      --ink: #1c1712;
+      --blood: #7d1f1a;
+      --bone: #e9e3d0;
+    }
+    html, body { margin: 0; height: 100%; overflow: hidden; background: var(--void); }
     #app canvas { display: block; }
+    button { font: inherit; background: none; border: none; cursor: pointer; padding: 0; color: inherit; }
+
+    /* film grain shared by paper + photos */
+    .grain::after {
+      content: ''; position: absolute; inset: 0; pointer-events: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+      mix-blend-mode: multiply; opacity: 0.35;
+    }
+
     #vignette {
-      position: fixed; inset: 0; pointer-events: none;
+      position: fixed; inset: 0; pointer-events: none; z-index: 3;
       background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.55) 100%);
     }
-    #overlay {
-      position: fixed; inset: 0; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; gap: 1.2rem;
-      background: rgba(0, 0, 0, 0.82); color: #b8a888; cursor: pointer;
-      font-family: Georgia, 'Times New Roman', serif; user-select: none;
-      text-align: center;
+
+    /* ------------------------------- landing ------------------------------ */
+    .screen {
+      position: fixed; inset: 0; z-index: 10; display: flex;
+      align-items: center; justify-content: center; overflow: hidden auto;
+      background:
+        radial-gradient(ellipse 90% 70% at 50% 30%, rgba(58,48,36,0.28), transparent 70%),
+        var(--void);
+      transition: opacity 0.6s ease; padding: 4vh 0;
     }
-    #overlay h1 { font-size: 2rem; font-weight: normal; letter-spacing: 0.5em; margin: 0; }
-    #overlay h2 { font-size: 0.85rem; font-weight: normal; letter-spacing: 0.25em; margin: 0; color: #6e6350; }
-    #overlay .enter { margin-top: 2rem; font-size: 0.95rem; letter-spacing: 0.35em; animation: pulse 2.4s infinite; }
-    #overlay .keys { font-size: 0.72rem; letter-spacing: 0.12em; color: #55503f; line-height: 1.9; }
+    .screen.gone { opacity: 0; pointer-events: none; }
+
+    #frontpage {
+      position: relative; width: min(680px, 92vw); box-sizing: border-box;
+      padding: clamp(2rem, 5vw, 3.5rem) clamp(1.4rem, 4vw, 3rem) clamp(2.4rem, 5vw, 3.2rem);
+      color: var(--ink); text-align: center; transform: rotate(-0.6deg);
+      background:
+        radial-gradient(140% 60% at 50% 0%, rgba(120,96,58,0.25), transparent 60%),
+        radial-gradient(80% 40% at 12% 96%, rgba(97,74,42,0.4), transparent 70%),
+        radial-gradient(50% 30% at 88% 80%, rgba(97,74,42,0.28), transparent 70%),
+        linear-gradient(174deg, var(--paper) 60%, var(--paper-dark));
+      box-shadow: 0 30px 80px rgba(0,0,0,0.9), inset 0 0 60px rgba(60,44,24,0.35);
+    }
+    .rule { border: none; border-top: 1px solid var(--ink); margin: 0.7rem 0; opacity: 0.8; }
+    .rule.double { border-top: 3px double var(--ink); }
+    .dateline {
+      font-family: 'Special Elite', 'Courier New', monospace;
+      font-size: clamp(0.55rem, 1.6vw, 0.72rem); letter-spacing: 0.28em;
+    }
+    #masthead {
+      position: relative; font-family: 'UnifrakturMaguntia', serif; font-weight: normal;
+      font-size: clamp(3.2rem, 11vw, 6.2rem); margin: 1.6rem 0 1.2rem; line-height: 1;
+    }
+    /* ghost double-strike of the masthead */
+    #masthead::before {
+      content: attr(data-text); position: absolute; inset: 0; color: var(--ink);
+      opacity: 0.18; filter: blur(2px); transform: translate(3px, 2px);
+      animation: ghost-drift 9s ease-in-out infinite;
+    }
+    @keyframes ghost-drift {
+      0%, 100% { transform: translate(3px, 2px); opacity: 0.18; }
+      50% { transform: translate(7px, 3px); opacity: 0.08; }
+    }
+    .deck {
+      font-family: 'Special Elite', 'Courier New', monospace;
+      font-size: clamp(0.7rem, 2vw, 0.9rem); letter-spacing: 0.42em; margin: 1.4rem 0 2.6rem;
+    }
+    /* smudged, illegible print below the fold */
+    .columns { display: flex; gap: 1.2rem; margin: 1.9rem 0 0; opacity: 0.5; filter: blur(0.6px); }
+    .columns div {
+      flex: 1; height: 74px;
+      background: repeating-linear-gradient(180deg, rgba(28,23,18,0.55) 0 2px, transparent 2px 7px);
+      mask-image: linear-gradient(180deg, #000 30%, transparent);
+    }
+    #begin {
+      font-family: 'Special Elite', 'Courier New', monospace;
+      font-size: clamp(1rem, 2.6vw, 1.25rem); letter-spacing: 0.55em; text-indent: 0.55em;
+      color: var(--blood); border: 3px double var(--blood); padding: 0.85rem 2.4rem;
+      transform: rotate(-1.6deg); opacity: 0.92; position: relative;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+      box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+    }
+    #begin:hover, #begin:focus-visible { opacity: 1; transform: rotate(-1.6deg) scale(1.03); }
+    #begin:active { transform: rotate(-1.6deg) scale(0.96) translateY(3px); box-shadow: none; }
+    #begin:focus-visible { outline: 2px dashed var(--blood); outline-offset: 5px; }
+
+    /* ------------------------------ case board ---------------------------- */
+    #cases { flex-direction: column; gap: 1rem; }
+    #cases header {
+      color: var(--bone); text-align: center;
+      font-family: 'Special Elite', 'Courier New', monospace; letter-spacing: 0.5em;
+      font-size: clamp(0.8rem, 2.4vw, 1.05rem); opacity: 0.85; text-indent: 0.5em;
+    }
+    #cases header small { display: block; font-size: 0.58em; color: #8d8571; margin-top: 0.6rem; letter-spacing: 0.34em; }
+    #board { position: relative; width: min(1080px, 96vw); aspect-ratio: 16 / 10; }
+    #string { position: absolute; inset: 0; width: 100%; height: 100%; }
+    #string line { stroke: var(--blood); stroke-width: 1.5; vector-effect: non-scaling-stroke; opacity: 0.75; }
+
+    .polaroid {
+      position: absolute; width: clamp(120px, 16vw, 178px); padding: 6px 6px 0;
+      background: linear-gradient(178deg, #efe9da, #cdc3ab);
+      box-shadow: 0 14px 30px rgba(0,0,0,0.75);
+      transform: rotate(var(--tilt)); transform-origin: 50% 8px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .polaroid figure { margin: 0; position: relative; }
+    .polaroid svg { display: block; width: 100%; height: auto; filter: sepia(0.25) contrast(1.05); }
+    .polaroid figcaption {
+      font-family: 'Caveat', cursive; color: #33291d; text-align: center;
+      font-size: clamp(0.95rem, 1.9vw, 1.25rem); line-height: 1.1; padding: 0.45rem 0 0.6rem;
+    }
+    .pin {
+      position: absolute; top: -7px; left: 50%; width: 13px; height: 13px;
+      transform: translateX(-50%); border-radius: 50%; z-index: 2;
+      background: radial-gradient(circle at 35% 30%, #a8433a, #4e120d 70%);
+      box-shadow: 0 3px 4px rgba(0,0,0,0.7);
+    }
+    .stamp {
+      position: absolute; top: 34%; left: 50%; z-index: 2; pointer-events: none;
+      transform: translate(-50%, -50%) rotate(-14deg);
+      font-family: 'Special Elite', 'Courier New', monospace; letter-spacing: 0.3em; text-indent: 0.3em;
+      font-size: 0.78rem; padding: 0.25rem 0.7rem; border: 2px solid; opacity: 0.85; mix-blend-mode: screen;
+    }
+    .sealed .stamp { color: #9a9484; border-color: #9a9484; opacity: 0.5; }
+    .active-case .stamp { color: #c8362b; border-color: #c8362b; animation: stamp-flicker 4s infinite; }
+    @keyframes stamp-flicker { 0%, 92%, 100% { opacity: 0.9; } 94% { opacity: 0.3; } 96% { opacity: 0.85; } 97% { opacity: 0.4; } }
+
+    .polaroid.sealed svg { filter: sepia(0.2) contrast(0.9) brightness(0.62); }
+    .polaroid.sealed { cursor: not-allowed; }
+    .polaroid.active-case { cursor: pointer; z-index: 3; }
+    .polaroid.active-case:hover, .polaroid.active-case:focus-visible {
+      transform: rotate(var(--tilt)) scale(1.06);
+      box-shadow: 0 22px 44px rgba(0,0,0,0.9), 0 0 34px rgba(200,54,43,0.18);
+    }
+    .polaroid.active-case:focus-visible { outline: 2px dashed var(--blood); outline-offset: 4px; }
+    .polaroid.shake { animation: refuse 0.4s ease; }
+    @keyframes refuse {
+      0%, 100% { transform: rotate(var(--tilt)); }
+      25% { transform: rotate(calc(var(--tilt) - 2.5deg)); }
+      65% { transform: rotate(calc(var(--tilt) + 2.5deg)); }
+    }
+
+    /* board collapses to a column on narrow screens; string hidden */
+    @media (max-width: 640px) {
+      #board { aspect-ratio: auto; display: flex; flex-direction: column; align-items: center; gap: 1.6rem; padding: 1rem 0 3rem; }
+      #string { display: none; }
+      .polaroid { position: static; width: min(240px, 70vw); }
+    }
+
+    /* ------------------------- in-game pause overlay ----------------------- */
+    #overlay {
+      position: fixed; inset: 0; z-index: 8; display: none; flex-direction: column;
+      align-items: center; justify-content: center; gap: 1.4rem;
+      background: rgba(4, 3, 2, 0.85); color: var(--paper); cursor: pointer;
+      font-family: 'Special Elite', 'Courier New', monospace; user-select: none; text-align: center;
+    }
+    #overlay.shown { display: flex; }
+    #overlay .enter { font-size: 0.95rem; letter-spacing: 0.4em; text-indent: 0.4em; animation: pulse 2.4s infinite; }
+    #overlay .keys { font-size: 0.68rem; letter-spacing: 0.14em; color: #776f58; line-height: 2; }
     @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
+
+    @media (prefers-reduced-motion: reduce) {
+      #masthead::before, .active-case .stamp, #overlay .enter { animation: none; }
+      .polaroid, #begin { transition: none; }
+    }
   </style>
 </head>
 <body>
   <div id="app"></div>
   <div id="vignette"></div>
+
   <div id="overlay">
-    <h1>THE CONCIERGE</h1>
-    <h2>FAIRMONT ROYAL YORK &mdash; MEZZANINE &amp; CONVENTION FLOOR</h2>
-    <div class="enter">CLICK TO ENTER</div>
+    <div class="enter">CLICK TO RESUME</div>
     <div class="keys">
-      WASD MOVE &middot; MOUSE LOOK &middot; SHIFT RUN &middot; SPACE JUMP<br />
+      WASD MOVE &middot; SHIFT RUN &middot; SPACE JUMP<br />
       C LIE DOWN &middot; F FLASHLIGHT &middot; ESC RELEASE
     </div>
   </div>
+
+  <section id="landing" class="screen">
+    <article id="frontpage" class="grain">
+      <div class="dateline">TORONTO &nbsp;&bull;&nbsp; LATE EDITION &nbsp;&bull;&nbsp; EST. 1929</div>
+      <hr class="rule double" />
+      <h1 id="masthead" data-text="The Concierge">The Concierge</h1>
+      <hr class="rule" />
+      <p class="deck">THE HOTELS REMEMBER.</p>
+      <button id="begin" autofocus>BEGIN</button>
+      <div class="columns" aria-hidden="true"><div></div><div></div><div></div></div>
+    </article>
+  </section>
+
+  <section id="cases" class="screen gone" hidden>
+    <header>CASE FILES<small>SELECT ONE</small></header>
+    <div id="board">
+      <svg id="string" viewBox="0 0 100 62" preserveAspectRatio="none" aria-hidden="true"></svg>
+      <!-- polaroids and string are injected by src/ui.js -->
+    </div>
+  </section>
+
   <script type="module" src="/src/main.js"></script>
 </body>
 </html>
