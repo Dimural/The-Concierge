@@ -152,7 +152,7 @@ export class Player {
     this.camera.rotation.z = Math.sin(this.bobPhase * 0.5) * 0.004;
 
     // safety: fell out of the world -> respawn at current floor height
-    if (this.pos.y < -80) { this.pos.set(183, 0, 137); this.vel.set(0, 0, 0); }
+    if (this.pos.y < -80) { this.pos.set(118, 0, 121.4); this.vel.set(0, 0, 0); }
   }
 
   moveAxis(axis, delta) {

@@ -138,15 +138,15 @@ export function makeLighting(scene) {
     scene.add(group);
     if (state === 'dead') continue;
     const color = cold ? COLD : WARM;
-    const intensity = type === 'chandelier' ? 260 : type === 'sconce' ? 90 : 150;
-    const light = new THREE.PointLight(color, 0, type === 'chandelier' ? 80 : 55, 2);
+    const intensity = type === 'chandelier' ? 800 : type === 'sconce' ? 170 : 300;
+    const light = new THREE.PointLight(color, 0, type === 'chandelier' ? 90 : 60, 2);
     light.position.set(x, y - (type === 'sconce' ? -0.4 : 0.6), z);
     scene.add(light);
     live.push({ light, glassMat, state, base: intensity, seed: seed++ * 3.7 });
   }
 
   // flashlight: spot with a lagging target for weighty handheld feel
-  const flashlight = new THREE.SpotLight(0xfff1d6, 0, 130, 0.46, 0.55, 1.8);
+  const flashlight = new THREE.SpotLight(0xfff1d6, 0, 130, 0.46, 0.55, 1.6);
   flashlight.castShadow = true;
   flashlight.shadow.mapSize.set(1024, 1024);
   flashlight.shadow.camera.near = 0.5;
@@ -166,7 +166,7 @@ export function makeLighting(scene) {
       for (const f of live) {
         const v = pattern(f.state, t, f.seed);
         f.light.intensity = f.base * v;
-        f.glassMat.emissiveIntensity = v * 1.6;
+        f.glassMat.emissiveIntensity = v * 2.2;
       }
       // flashlight follows the camera with lag + tiny unreliable dips
       camera.getWorldDirection(wantDir);
@@ -175,7 +175,7 @@ export function makeLighting(scene) {
       flashlight.position.copy(camera.position).addScaledVector(right, 0.55).add(new THREE.Vector3(0, -0.65, 0));
       flashTarget.position.copy(flashlight.position).addScaledVector(aimDir, 40);
       const dip = vnoise(t * 2.3) > 0.94 ? 0.35 + 0.4 * vnoise(t * 55) : 1;
-      flashlight.intensity = flashOn ? 950 * dip : 0;
+      flashlight.intensity = flashOn ? 1250 * dip : 0;
     },
   };
 }

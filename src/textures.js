@@ -234,7 +234,7 @@ export function makeMaterials() {
     ceiling: new THREE.MeshStandardMaterial({ map: rep(ceilTile, 0.25, 0.25), roughness: 0.95, side: THREE.DoubleSide }),
     plasterCeiling: new THREE.MeshStandardMaterial({ map: rep(plaster, 0.1, 0.1), color: 0x7a746a, roughness: 0.95, side: THREE.DoubleSide }),
     trim: new THREE.MeshStandardMaterial({ color: 0x2e2318, roughness: 0.7 }),
-    metal: new THREE.MeshStandardMaterial({ map: rep(metal, 0.3, 0.3), color: 0x777a7d, roughness: 0.45, metalness: 0.7 }),
+    metal: new THREE.MeshStandardMaterial({ map: rep(metal, 0.3, 0.3), color: 0x4e5154, roughness: 0.55, metalness: 0.7 }),
     darkMetal: new THREE.MeshStandardMaterial({ color: 0x2a2c2e, roughness: 0.5, metalness: 0.6 }),
     cloth: new THREE.MeshStandardMaterial({ color: 0x6e6656, roughness: 1 }),
     chair: new THREE.MeshStandardMaterial({ color: 0x3a2a30, roughness: 0.85 }),
