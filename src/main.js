@@ -44,6 +44,10 @@ for (const build of [buildEscalator, buildOval]) {
 
 const lighting = makeLighting(scene);
 const player = new Player(camera, colliders, SPAWN);
+camera.position.set(SPAWN.x, SPAWN.y + 5.4, SPAWN.z);
+camera.rotation.order = 'YXZ';
+camera.rotation.y = SPAWN.yaw;
+window.__concierge = { player, camera, scene };
 
 // --- input
 const input = { keys: new Set(), jumpQueued: false };

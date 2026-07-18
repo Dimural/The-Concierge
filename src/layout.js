@@ -260,7 +260,7 @@ export const ESCALATOR = {
 };
 
 // oval planter landmark in the mezzanine's corridor B ("central feature")
-export const OVAL = { cx: 160, cz: 121.4, rx: 15, rz: 7.5, h: 2.2 };
+export const OVAL = { cx: 160, cz: 121.4, rx: 15, rz: 5, h: 2.2 };
 
 export const SPAWN = { x: 183, y: MEZZ_Y, z: 137, yaw: Math.PI / 2 }; // top landing, facing west
 
