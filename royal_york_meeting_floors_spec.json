@@ -1,0 +1,140 @@
+{
+  "_readme": {
+    "purpose": "Structured spec for building a walkable 3D recreation of the Fairmont Royal York Main Mezzanine + Convention Floor. Extracted from Fairmont-Royal-York-Floor-Plan.pdf (layout) and Meeting_Space_Capacity_Charts.pdf (dimensions).",
+    "confidence_levels": {
+      "exact": "Pulled directly from the Meeting Space Capacity Chart. Width/length/ceiling height/area are the hotel's own published figures.",
+      "estimated": "Room exists on the floor plan but has NO entry in the capacity chart (it's a utility/back-of-house space, not a bookable meeting room). Dimensions are rough placeholders inferred from its visual size relative to labeled rooms. Treat these as 'reasonable box,' not fact.",
+      "inferred_layout": "The floor plan PDF is a scanned image, not vector/CAD data, so there are no pixel coordinates to extract. Room ORDER (west-to-east) and BAND/ROW grouping (which rooms share a corridor, which rooms stack north-south) are read directly off the image and are reliable. Absolute (x,z) coordinates are NOT provided — instead, rooms are given in sequence with their real widths so a layout script can lay them edge-to-edge along a corridor spine and reproduce correct adjacency and proportion."
+    },
+    "units": {
+      "linear": "feet (decimal). Original feet-inches also included as *_raw for reference.",
+      "area": "square feet",
+      "conversion": "meters = feet * 0.3048"
+    },
+    "dimension_convention": "For each room, 'depth_ft' is the shorter perpendicular dimension (roughly north-south, cutting across the corridor) and 'run_ft' is the longer dimension along the corridor/row (roughly east-west). This was inferred from cases where two rooms combine (e.g. Confederation 5 + 6 = Confederation 5,6, where the run_ft values sum but depth_ft stays constant) — confirms which axis is 'along the row'. Verify against the floor plan image before treating as ground truth for rooms that don't have a combined-room check.",
+    "out_of_scope_this_phase": "Imperial Room, Banff, Whistler, Montebello, Jasper, and the 19th Floor Executive Level salons are on the capacity chart but are NOT part of Main Mezzanine or Convention Floor and are excluded from this build phase per the original brief.",
+    "how_to_use_with_claude_code": "Give Claude Code this JSON file instead of the raw PDFs. Ask it to: (1) lay out each 'band' as a sequence of boxes along a corridor spine using run_ft for spacing and depth_ft for room thickness, (2) stack bands using the north_south_order field, (3) use ceiling_height_ft as room height, (4) treat 'estimated' rooms as filler geometry that can be adjusted later. This avoids re-parsing the PDFs every turn."
+  },
+
+  "main_mezzanine_floor": {
+    "elevation_ft": 0,
+    "bands": [
+      {
+        "band_name": "north_perimeter_row",
+        "north_south_order": 1,
+        "description": "Meeting rooms along the north exterior wall, west to east.",
+        "rooms": [
+          { "name": "Confederation 3", "confidence": "exact", "depth_ft": 27.58, "depth_raw": "27'7\"", "run_ft": 38.58, "run_raw": "38'7\"", "ceiling_height_ft": 9.42, "ceiling_raw": "9'5\"", "area_sqft": 1009 },
+          { "name": "Confederation 5", "confidence": "exact", "depth_ft": 27.58, "depth_raw": "27'7\"", "run_ft": 49.5, "run_raw": "49'6\"", "ceiling_height_ft": 8.92, "ceiling_raw": "8'11\"", "area_sqft": 1183 },
+          { "name": "Confederation 6", "confidence": "exact", "depth_ft": 27.58, "depth_raw": "27'7\"", "run_ft": 26.83, "run_raw": "26'10\"", "ceiling_height_ft": 8.92, "ceiling_raw": "8'11\"", "area_sqft": 652, "note": "Confederation 5+6 combine via operable wall into one 1950 sqft room, 76'9\" run — confirms 5 and 6 are adjacent along the row." },
+          { "name": "Tudor 7", "confidence": "exact", "depth_ft": 24.33, "depth_raw": "24'4\"", "run_ft": 45.5, "run_raw": "45'6\"", "ceiling_height_ft": 10.83, "ceiling_raw": "10'10\"", "area_sqft": 1076 },
+          { "name": "Tudor 8", "confidence": "exact", "depth_ft": 24.67, "depth_raw": "24'8\"", "run_ft": 47.42, "run_raw": "47'5\"", "ceiling_height_ft": 10.83, "ceiling_raw": "10'10\"", "area_sqft": 1128, "note": "Tudor 7+8 combine into one 2195 sqft room, 93'2\" run." },
+          { "name": "To Garage (passage)", "confidence": "estimated", "depth_ft": 8, "run_ft": 10, "ceiling_height_ft": 9, "note": "Service corridor/entry shown on plan, no room dimensions given." },
+          { "name": "Mens (west)", "confidence": "estimated", "depth_ft": 10, "run_ft": 12, "ceiling_height_ft": 9 },
+          { "name": "Saskatchewan", "confidence": "exact", "depth_ft": 25.83, "depth_raw": "25'10\"", "run_ft": 24.75, "run_raw": "24'9\"", "ceiling_height_ft": 8.5, "ceiling_raw": "8'6\"", "area_sqft": 589 },
+          { "name": "Ladies (west)", "confidence": "estimated", "depth_ft": 10, "run_ft": 12, "ceiling_height_ft": 9 },
+          { "name": "Nova Scotia", "confidence": "exact", "depth_ft": 23.0, "depth_raw": "23'0\"", "run_ft": 24.83, "run_raw": "24'10\"", "ceiling_height_ft": 10.0, "ceiling_raw": "10'0\"", "area_sqft": 571 },
+          { "name": "New Brunswick", "confidence": "exact", "depth_ft": 22.92, "depth_raw": "22'11\"", "run_ft": 24.83, "run_raw": "24'10\"", "ceiling_height_ft": 9.75, "ceiling_raw": "9'9\"", "area_sqft": 568 },
+          { "name": "Prince Edward Island", "confidence": "exact", "depth_ft": 18.75, "depth_raw": "18'9\"", "run_ft": 24.83, "run_raw": "24'10\"", "ceiling_height_ft": 10.0, "ceiling_raw": "10'0\"", "area_sqft": 466 },
+          { "name": "Newfoundland", "confidence": "exact", "depth_ft": 22.92, "depth_raw": "22'11\"", "run_ft": 23.67, "run_raw": "23'8\"", "ceiling_height_ft": 8.92, "ceiling_raw": "8'11\"", "area_sqft": 424 }
+        ]
+      },
+      {
+        "band_name": "central_west_utility",
+        "north_south_order": 2,
+        "description": "Back-of-house strip on the west side, south of Confederation rooms.",
+        "rooms": [
+          { "name": "Medical Centre", "confidence": "estimated", "depth_ft": 18, "run_ft": 22, "ceiling_height_ft": 9 },
+          { "name": "Check Room (north)", "confidence": "estimated", "depth_ft": 8, "run_ft": 10, "ceiling_height_ft": 9 },
+          { "name": "Audio Visual Room", "confidence": "estimated", "depth_ft": 10, "run_ft": 14, "ceiling_height_ft": 9 },
+          { "name": "Kitchen (mezzanine)", "confidence": "estimated", "depth_ft": 35, "run_ft": 45, "ceiling_height_ft": 10, "note": "Large service kitchen spanning the central-north area; no chart entry, sized relative to adjacent labeled rooms." }
+        ]
+      },
+      {
+        "band_name": "central_meeting_rooms",
+        "north_south_order": 3,
+        "description": "Large central/east meeting rooms, arranged in a west block (Boardroom/Territories) and a stacked east block (Alberta/Quebec/British Columbia north-to-south, Manitoba/Algonquin north-to-south).",
+        "rooms": [
+          { "name": "Boardroom", "confidence": "exact", "depth_ft": 23.5, "depth_raw": "23'6\"", "run_ft": 34.58, "run_raw": "34'7\"", "ceiling_height_ft": 9.92, "ceiling_raw": "9'11\"", "area_sqft": 746, "note": "North of Territories." },
+          { "name": "Territories", "confidence": "exact", "depth_ft": 35.58, "depth_raw": "35'7\"", "run_ft": 51.5, "run_raw": "51'6\"", "ceiling_height_ft": 9.42, "ceiling_raw": "9'5\"", "area_sqft": 1833, "note": "Largest central room; south of Boardroom." },
+          { "name": "Alberta", "confidence": "exact", "depth_ft": 24.33, "depth_raw": "24'4\"", "run_ft": 56.58, "run_raw": "56'7\"", "ceiling_height_ft": 9.5, "ceiling_raw": "9'6\"", "area_sqft": 1348, "note": "North, stacked above Quebec." },
+          { "name": "Quebec", "confidence": "exact", "depth_ft": 23.67, "depth_raw": "23'8\"", "run_ft": 56.25, "run_raw": "56'3\"", "ceiling_height_ft": 10.0, "ceiling_raw": "10'0\"", "area_sqft": 1322, "note": "Between Alberta (north) and British Columbia (south)." },
+          { "name": "British Columbia", "confidence": "exact", "depth_ft": 23.25, "depth_raw": "23'3\"", "run_ft": 51.58, "run_raw": "51'7\"", "ceiling_height_ft": 9.58, "ceiling_raw": "9'7\"", "area_sqft": 1150, "note": "South of Quebec." },
+          { "name": "Manitoba", "confidence": "exact", "depth_ft": 22.42, "depth_raw": "22'5\"", "run_ft": 55.25, "run_raw": "55'3\"", "ceiling_height_ft": 9.5, "ceiling_raw": "9'6\"", "area_sqft": 1214, "note": "East of Alberta, near the north wall." },
+          { "name": "Mens (east)", "confidence": "estimated", "depth_ft": 10, "run_ft": 12, "ceiling_height_ft": 9, "note": "Near Manitoba/Algonquin." },
+          { "name": "Algonquin", "confidence": "exact", "depth_ft": 22.83, "depth_raw": "22'10\"", "run_ft": 37.92, "run_raw": "37'11\"", "ceiling_height_ft": 9.42, "ceiling_raw": "9'5\"", "area_sqft": 856, "note": "Far east, south of Manitoba." },
+          { "name": "Ladies (east)", "confidence": "estimated", "depth_ft": 10, "run_ft": 12, "ceiling_height_ft": 9 }
+        ]
+      },
+      {
+        "band_name": "south_perimeter_row",
+        "north_south_order": 4,
+        "description": "South side, west to east, facing the escalator/lobby core.",
+        "rooms": [
+          { "name": "Library", "confidence": "exact", "depth_ft": 31.5, "depth_raw": "31'6\"", "run_ft": 35.42, "run_raw": "35'5\"", "ceiling_height_ft": 11.0, "ceiling_raw": "11'0\"", "area_sqft": 1126 },
+          { "name": "York", "confidence": "exact", "depth_ft": 22.75, "depth_raw": "22'9\"", "run_ft": 32.0, "run_raw": "32'0\"", "ceiling_height_ft": 10.83, "ceiling_raw": "10'10\"", "area_sqft": 726 },
+          { "name": "Executive Office", "confidence": "estimated", "depth_ft": 15, "run_ft": 25, "ceiling_height_ft": 9 },
+          { "name": "Reservation Office", "confidence": "estimated", "depth_ft": 12, "run_ft": 18, "ceiling_height_ft": 9 },
+          { "name": "York Station Bar", "confidence": "estimated", "depth_ft": 15, "run_ft": 20, "ceiling_height_ft": 10 },
+          { "name": "Sales/Catering Office", "confidence": "estimated", "depth_ft": 15, "run_ft": 30, "ceiling_height_ft": 9 },
+          { "name": "Escalators (mezzanine landing)", "confidence": "estimated", "depth_ft": 15, "run_ft": 20, "ceiling_height_ft": 12, "note": "Vertical circulation connecting down to Convention Floor." }
+        ]
+      }
+    ],
+    "central_feature": {
+      "name": "Central corridor oval feature",
+      "note": "The floor plan shows an oval/ring decorative element (planter or skylight well) in the main central corridor between the central-west utility band and the central meeting rooms band. Include as a non-structural landmark, exact size not given — estimate ~15ft x 30ft oval."
+    }
+  },
+
+  "convention_floor": {
+    "elevation_ft": -18,
+    "note_on_elevation": "Convention Floor sits one level below Main Mezzanine, reached via the escalators; exact floor-to-floor height not in source PDFs, 18ft is a placeholder — adjust based on Main Mezzanine ceiling height + structural depth.",
+    "bands": [
+      {
+        "band_name": "west_hall",
+        "east_west_order": 1,
+        "description": "Concert Hall spans nearly the full north-south depth of the floor on the west side, with the Stage as a sub-space at its north end.",
+        "rooms": [
+          { "name": "Stage", "confidence": "estimated", "depth_ft": 20, "run_ft": 40, "ceiling_height_ft": 20, "note": "North end of Concert Hall; no separate chart entry — proportioned relative to Concert Hall." },
+          { "name": "Concert Hall", "confidence": "exact", "depth_ft": 67.67, "depth_raw": "67'8\"", "run_ft": 166.33, "run_raw": "166'4\"", "ceiling_height_ft": 23.58, "ceiling_raw": "23'7\"", "area_sqft": 8396, "note": "Runs the full north-south length of the floor's west side; Stage occupies its north portion." }
+        ]
+      },
+      {
+        "band_name": "central_service_and_foyer",
+        "east_west_order": 2,
+        "description": "Kitchen along the north edge, pre-function Foyer running north-south through the center, Ladies/Mens/Check Room clustered near the kitchen.",
+        "rooms": [
+          { "name": "Kitchen (convention)", "confidence": "estimated", "depth_ft": 25, "run_ft": 90, "ceiling_height_ft": 14, "note": "Spans across the north edge above the Foyer." },
+          { "name": "Ladies (convention)", "confidence": "estimated", "depth_ft": 12, "run_ft": 18, "ceiling_height_ft": 9 },
+          { "name": "Mens (convention)", "confidence": "estimated", "depth_ft": 12, "run_ft": 18, "ceiling_height_ft": 9 },
+          { "name": "Foyer (north)", "confidence": "estimated", "depth_ft": 25, "run_ft": 80, "ceiling_height_ft": 14, "note": "Pre-function corridor connecting Concert Hall, Ontario, and Ballroom areas; width estimated from image proportion." },
+          { "name": "Foyer (south, near Ballroom)", "confidence": "estimated", "depth_ft": 20, "run_ft": 80, "ceiling_height_ft": 14 },
+          { "name": "Check Room (south)", "confidence": "estimated", "depth_ft": 8, "run_ft": 10, "ceiling_height_ft": 9, "note": "Near the escalators/Toronto room." },
+          { "name": "Escalators (convention landing)", "confidence": "estimated", "depth_ft": 15, "run_ft": 20, "ceiling_height_ft": 18 }
+        ]
+      },
+      {
+        "band_name": "east_hall",
+        "east_west_order": 3,
+        "description": "Ontario (north) stacked with Canadian, which is the largest room and spans nearly the full north-south depth on the far east side.",
+        "rooms": [
+          { "name": "Ontario", "confidence": "exact", "depth_ft": 51.42, "depth_raw": "51'5\"", "run_ft": 62.75, "run_raw": "62'9\"", "ceiling_height_ft": 17.58, "ceiling_raw": "17'7\"", "area_sqft": 3211 },
+          { "name": "Canadian", "confidence": "exact", "depth_ft": 70.92, "depth_raw": "70'11\"", "run_ft": 186.83, "run_raw": "186'10\"", "ceiling_height_ft": 21.58, "ceiling_raw": "21'7\"", "area_sqft": 12843, "note": "Largest room on this floor; runs the full east edge, adjacent to Ontario at its north end." }
+        ]
+      },
+      {
+        "band_name": "south_row",
+        "east_west_order": 4,
+        "north_south_order": "south of central_service_and_foyer / west_hall",
+        "description": "Ballroom flanked by Salon B (west) and Salon A (east), with Toronto in the southeast corner.",
+        "rooms": [
+          { "name": "Salon B", "confidence": "exact", "depth_ft": 34.17, "depth_raw": "34'2\"", "run_ft": 40.5, "run_raw": "40'6\"", "ceiling_height_ft": 11.17, "ceiling_raw": "11'2\"", "area_sqft": 1383 },
+          { "name": "Ballroom", "confidence": "exact", "depth_ft": 41.42, "depth_raw": "41'5\"", "run_ft": 121.25, "run_raw": "121'3\"", "ceiling_height_ft": 24.42, "ceiling_raw": "24'5\"", "area_sqft": 4900, "note": "Center of the south row, between Salon B and Salon A; can combine with both via airwalls." },
+          { "name": "Salon A", "confidence": "exact", "depth_ft": 36.83, "depth_raw": "36'10\"", "run_ft": 40.5, "run_raw": "40'6\"", "ceiling_height_ft": 11.0, "ceiling_raw": "11'0\"", "area_sqft": 1383 },
+          { "name": "Toronto", "confidence": "exact", "depth_ft": 28.75, "depth_raw": "28'9\"", "run_ft": 37.67, "run_raw": "37'8\"", "ceiling_height_ft": 7.92, "ceiling_raw": "7'11\"", "area_sqft": 839, "note": "Southeast corner, east of Salon A, near the escalators." }
+        ]
+      }
+    ]
+  }
+}

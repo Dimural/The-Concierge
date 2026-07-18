@@ -1,0 +1,5 @@
+node_modules/
+dist/
+*.pdf
+README-4.md
+.DS_Store
