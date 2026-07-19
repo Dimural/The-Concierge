@@ -228,15 +228,7 @@ npm run shots:flow     # puppeteer plays the ENTIRE game headlessly —
 
 The screenshots in this README are unedited output of `npm run shots:flow` running against the **live** Stay22 API.
 
----
 
-## ▍Honesty, consent & disclosures
-
-- **The horror is fictional.** The Fairmont Royal York is a real, operating, well-reviewed hotel. Nothing depicted reflects any actual event or claim about the property.
-- **Booking links are disclosed affiliate links** carrying a campaign ID. Booking is optional and never affects gameplay.
-- **Not a medical product.** Biometrics are entertainment signals with confidence gating. The game never instructs breath-holding — it rewards calm.
-- **Privacy by construction.** Consent before any capture; reduced mode with zero capture stays fully playable; fallback processing is local-only with an always-visible capture indicator; keys and raw transaction data never reach the browser.
-- **Live vs. simulated is always labelled** — in the judge panel, in the session badge, and on every simulated booking event.
 
 ---
 
@@ -245,10 +237,6 @@ The screenshots in this README are unedited output of `npm run shots:flow` runni
 **Stay22** Direct Travel API — live inventory, attribution, transactions · **Presage** SmartSpectra — physiological sensing
 **three.js** · **Vite** · **Node.js**
 
-Built from the Royal York's real meeting-floor plans — 1 unit = 1 foot.
 
-*Authored by Dimural Murat · Built with Claude Code*
-
-### `THE NIGHTMARE WAS FICTIONAL. THE HOTEL IS REAL.`
 
 </div>
