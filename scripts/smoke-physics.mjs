@@ -113,7 +113,7 @@ const forward = () => ({ keys: new Set(['KeyW']), jumpQueued: false });
   let peak = 0;
   const dt = 1 / 60;
   for (let i = 0; i < 90; i++) { p.update(dt, input); peak = Math.max(peak, p.pos.y); }
-  check(peak > MEZZ_Y + 1.5, `jump peak ${peak.toFixed(2)}ft above floor`);
+  check(peak > MEZZ_Y + 3.0, `jump peak ${peak.toFixed(2)}ft above floor (clears table/counter height)`);
   check(Math.abs(p.pos.y - MEZZ_Y) < 0.01, 'landed after jump');
 }
 
