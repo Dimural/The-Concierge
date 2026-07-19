@@ -527,7 +527,7 @@ Replace with:
 - [ ] **Step 2: Run it and confirm it fails**
 
 Run: `npm run check:physics`
-Expected: `FAIL jump peak 2.06ft above floor (clears table/counter height)` — current `JUMP_V = 12.5` only reaches `12.5^2 / (2*38) ≈ 2.06ft`, short of the 3.0ft counter-clearing bar.
+Expected: `FAIL jump peak 1.95ft above floor (clears table/counter height)` — current `JUMP_V = 12.5` falls short of the 3.0ft counter-clearing bar (continuous-physics estimate is `12.5^2 / (2*38) ≈ 2.06ft`; the discrete-timestep simulation measures slightly lower, at 1.95ft).
 
 - [ ] **Step 3: Raise `JUMP_V`**
 
@@ -543,7 +543,7 @@ const JUMP_V = 16;
 - [ ] **Step 4: Run it and confirm it passes**
 
 Run: `npm run check:physics`
-Expected: `ok  jump peak 3.37ft above floor (clears table/counter height)`, script ends `physics smoke test OK`.
+Expected: `ok  jump peak 3.24ft above floor (clears table/counter height)` (the discrete-timestep simulation lands a bit below the continuous-physics estimate of `16^2/(2*38) ≈ 3.37ft` — 3.24ft is correct, not a bug), script ends `physics smoke test OK`.
 
 - [ ] **Step 5: Commit**
 
