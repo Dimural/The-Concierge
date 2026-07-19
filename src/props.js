@@ -158,12 +158,17 @@ export function buildProps(floors, mats) {
     t.position.set(cx, r.y + 2.4, cz);
     t.castShadow = t.receiveShadow = true;
     group.add(t);
-    for (const [ox, oz] of [[-lw / 2 + 1, -ld / 2 + 1], [lw / 2 - 1, -ld / 2 + 1], [-lw / 2 + 1, ld / 2 - 1], [lw / 2 - 1, ld / 2 - 1]]) {
+    const legOffsets = [[-lw / 2 + 1, -ld / 2 + 1], [lw / 2 - 1, -ld / 2 + 1], [-lw / 2 + 1, ld / 2 - 1], [lw / 2 - 1, ld / 2 - 1]];
+    for (const [ox, oz] of legOffsets) {
       const leg = new THREE.Mesh(new THREE.BoxGeometry(0.4, 2.3, 0.4), mats.trim);
       leg.position.set(cx + ox, r.y + 1.15, cz + oz);
       group.add(leg);
+      // leg collider matches the visual post, leaving the rest of the underside open
+      colliders.push(aabb(cx + ox - 0.2, cx + ox + 0.2, r.y, r.y + 2.3, cz + oz - 0.2, cz + oz + 0.2));
     }
-    colliders.push(aabb(cx - lw / 2, cx + lw / 2, r.y, r.y + 2.55, cz - ld / 2, cz + ld / 2));
+    const slab = aabb(cx - lw / 2, cx + lw / 2, r.y + 2.25, r.y + 2.55, cz - ld / 2, cz + ld / 2);
+    colliders.push(slab);
+    hideVolumes.push(slab);
     for (let i = 0; i < 8; i++) {
       const side = i % 2 ? 1 : -1;
       const x = cx - lw / 2 + 2.5 + Math.floor(i / 2) * (lw / 4);
