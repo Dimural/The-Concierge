@@ -43,28 +43,21 @@
     }
     .screen.gone { opacity: 0; pointer-events: none; }
 
-    /* the landing IS the sheet of newsprint, edge to edge */
-    #landing {
-      z-index: 10; padding: 0; color: var(--ink);
-      background:
-        radial-gradient(120% 90% at 50% -10%, rgba(122,98,60,0.35), transparent 55%),
-        radial-gradient(70% 45% at 8% 100%, rgba(90,68,38,0.5), transparent 70%),
-        radial-gradient(55% 35% at 94% 88%, rgba(90,68,38,0.38), transparent 70%),
-        radial-gradient(40% 26% at 78% 12%, rgba(133,105,60,0.3), transparent 70%),
-        linear-gradient(171deg, #ded1ab 0%, var(--paper) 45%, #bfae83 100%);
-      box-shadow: inset 0 0 18vmax rgba(46,33,16,0.55);
+    /* the landing is the front-page artwork, edge to edge (cover-cropped
+       around its center so the BEGIN stamp hotspot always lines up) */
+    #landing { z-index: 10; padding: 0; background: var(--void); }
+    #paper {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      aspect-ratio: 1672 / 941;
+      width: max(100vw, calc(100vh * 1672 / 941));
     }
-    /* crinkles: unfolded-crease facets + two long accidental creases */
-    #landing::before {
-      content: ''; position: absolute; inset: 0; pointer-events: none;
-      background:
-        linear-gradient(90deg, transparent 32.4%, rgba(255,250,230,0.2) 33.15%, rgba(41,30,14,0.22) 33.75%, transparent 35%),
-        linear-gradient(90deg, transparent 65.6%, rgba(41,30,14,0.2) 66.4%, rgba(255,250,230,0.17) 67.05%, transparent 68.4%),
-        linear-gradient(180deg, transparent 51.5%, rgba(255,250,230,0.14) 52.4%, rgba(41,30,14,0.2) 53.2%, transparent 54.8%),
-        linear-gradient(113deg, transparent 42%, rgba(255,250,230,0.12) 46%, rgba(41,30,14,0.14) 47.2%, transparent 52%),
-        linear-gradient(67deg, transparent 12%, rgba(41,30,14,0.1) 16%, rgba(255,250,230,0.1) 17.2%, transparent 21%),
-        linear-gradient(158deg, transparent 78%, rgba(41,30,14,0.16) 81%, rgba(255,250,230,0.1) 82%, transparent 85%),
-        conic-gradient(from 200deg at 33.6% 52.8%, rgba(255,250,230,0.08), rgba(41,30,14,0.08), transparent 30%);
+    #paper img {
+      width: 100%; height: 100%; display: block;
+      animation: image-settle 1.6s ease backwards;
+    }
+    @keyframes image-settle {
+      from { opacity: 0; transform: scale(1.04); filter: brightness(0.4) blur(2px); }
+      to { opacity: 1; transform: none; filter: none; }
     }
     /* slow candle-light sweep so the sheet feels lit, not printed on screen */
     .sheen {
@@ -77,75 +70,18 @@
       to { transform: translate(9%, 5%); }
     }
 
-    #frontpage {
-      position: relative; width: min(1020px, 100vw); box-sizing: border-box;
-      padding: clamp(1.2rem, 3.5vh, 3rem) clamp(1.4rem, 5vw, 4rem);
-      text-align: center;
-    }
-    .rule { border: none; border-top: 1px solid var(--ink); margin: 0.7rem 0; opacity: 0.8; }
-    .rule.double { border-top: 3px double var(--ink); }
-    .dateline {
-      display: flex; justify-content: space-between; gap: 1rem;
-      font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(0.55rem, 1.6vw, 0.74rem); letter-spacing: 0.24em;
-    }
-    #masthead {
-      position: relative; font-family: 'UnifrakturMaguntia', serif; font-weight: normal;
-      font-size: clamp(3.4rem, 13vw, 8.5rem); margin: 2rem 0 1.6rem; line-height: 0.95;
-    }
-    /* ghost double-strike of the masthead */
-    #masthead::before {
-      content: attr(data-text); position: absolute; inset: 0; color: var(--ink);
-      opacity: 0.18; filter: blur(2px); transform: translate(3px, 2px);
-      animation: ghost-drift 9s ease-in-out infinite;
-    }
-    @keyframes ghost-drift {
-      0%, 100% { transform: translate(3px, 2px); opacity: 0.18; }
-      50% { transform: translate(8px, 3px); opacity: 0.07; }
-    }
-    .deck {
-      font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(0.72rem, 2vw, 1rem); letter-spacing: 0.46em; text-indent: 0.46em; margin: 1.6rem 0 2.4rem;
-    }
-    /* smudged, illegible print below the fold */
-    .columns { display: flex; gap: clamp(1rem, 3vw, 2.2rem); margin: 2.4rem 0 0; opacity: 0.55; filter: blur(0.5px); }
-    .columns div {
-      flex: 1; height: clamp(70px, 16vh, 150px);
-      background: repeating-linear-gradient(180deg, rgba(28,23,18,0.5) 0 2px, transparent 2px 7px);
-      mask-image: linear-gradient(180deg, #000 25%, transparent);
-    }
-    /* one column is a blurred evidence photo with a smear where a figure was */
-    .columns .photo {
-      background:
-        radial-gradient(30% 55% at 62% 45%, rgba(233,227,208,0.35), transparent 70%),
-        radial-gradient(90% 90% at 50% 50%, rgba(28,23,18,0.75), rgba(28,23,18,0.9));
-      mask-image: none; filter: blur(0.8px);
-    }
+    /* invisible hotspot over the printed BEGIN stamp; lights up on hover */
     #begin {
-      font-family: 'Special Elite', 'Courier New', monospace;
-      font-size: clamp(1.05rem, 2.6vw, 1.4rem); letter-spacing: 0.55em; text-indent: 0.55em;
-      color: var(--blood); border: 3px double var(--blood); padding: 0.9rem 2.6rem;
-      transform: rotate(-1.6deg); opacity: 0.92; position: relative;
-      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
-      box-shadow: 0 4px 0 rgba(0,0,0,0.12);
+      position: absolute; left: 39.6%; top: 43.6%; width: 21.4%; height: 11.2%;
+      border-radius: 6px; cursor: pointer;
+      transition: background 0.25s ease, box-shadow 0.25s ease;
     }
-    #begin:hover, #begin:focus-visible { opacity: 1; transform: rotate(-1.6deg) scale(1.04); }
-    #begin:active { transform: rotate(-1.6deg) scale(0.95) translateY(3px); box-shadow: none; }
-    #begin:focus-visible { outline: 2px dashed var(--blood); outline-offset: 5px; }
-
-    /* staged wake-up on load */
-    #frontpage > * { animation: settle 0.9s ease backwards; }
-    #frontpage > :nth-child(1) { animation-delay: 0.15s; }
-    #frontpage > :nth-child(2) { animation-delay: 0.3s; }
-    #frontpage > :nth-child(3) { animation-delay: 0.45s; }
-    #frontpage > :nth-child(4) { animation-delay: 0.75s; }
-    #frontpage > :nth-child(5) { animation-delay: 0.95s; }
-    #frontpage > :nth-child(6) { animation-delay: 1.25s; }
-    #frontpage > :nth-child(7) { animation-delay: 1.45s; }
-    @keyframes settle {
-      from { opacity: 0; transform: translateY(9px); filter: blur(3px); }
-      to { opacity: 1; transform: none; filter: none; }
+    #begin:hover, #begin:focus-visible {
+      background: radial-gradient(60% 70% at 50% 50%, rgba(255, 224, 166, 0.34), rgba(255, 224, 166, 0.12));
+      box-shadow: 0 0 60px 22px rgba(255, 208, 140, 0.28);
     }
+    #begin:active { background: rgba(255, 224, 166, 0.13); box-shadow: 0 0 28px 9px rgba(255, 208, 140, 0.16); }
+    #begin:focus-visible { outline: 2px dashed var(--blood); outline-offset: 4px; }
 
     /* pressing BEGIN: the camera pushes through the page into the dark */
     #landing.leaving {
@@ -241,8 +177,8 @@
     @keyframes pulse { 0%, 100% { opacity: 0.35; } 50% { opacity: 1; } }
 
     @media (prefers-reduced-motion: reduce) {
-      #masthead::before, .active-case .stamp, #overlay .enter, .sheen,
-      #frontpage > *, .polaroid, #string line, #landing.leaving { animation: none; }
+      .active-case .stamp, #overlay .enter, .sheen,
+      #paper img, .polaroid, #string line, #landing.leaving { animation: none; }
       #string line { stroke-dashoffset: 0; }
       #landing.leaving { opacity: 0; transition: opacity 0.4s; }
       .polaroid, #begin { transition: none; }
@@ -261,17 +197,12 @@
     </div>
   </div>
 
-  <section id="landing" class="screen grain">
+  <section id="landing" class="screen">
+    <div id="paper">
+      <img src="/landing.jpg" alt="The Concierge — front page, late edition. The hotels remember." />
+      <button id="begin" aria-label="Begin"></button>
+    </div>
     <div class="sheen" aria-hidden="true"></div>
-    <article id="frontpage">
-      <div class="dateline"><span>VOL. XCVII &middot; No. 13</span><span>TORONTO &mdash; LATE EDITION</span><span>EST. 1929</span></div>
-      <hr class="rule double" />
-      <h1 id="masthead" data-text="The Concierge">The Concierge</h1>
-      <hr class="rule" />
-      <p class="deck">THE HOTELS REMEMBER.</p>
-      <button id="begin" autofocus>BEGIN</button>
-      <div class="columns" aria-hidden="true"><div></div><div class="photo"></div><div></div><div></div></div>
-    </article>
   </section>
 
   <section id="cases" class="screen" hidden>
