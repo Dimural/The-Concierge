@@ -27,20 +27,21 @@ function thud(time, freq, vol, dur) {
 export function footstep(running) {
   if (!ctx || ctx.state !== 'running') return;
   const t = ctx.currentTime;
-  const vol = (running ? 0.2 : 0.1) * (0.8 + Math.random() * 0.4);
+  // sprinting is LOUD — it will matter once the entity can hear
+  const vol = (running ? 0.34 : 0.1) * (0.8 + Math.random() * 0.4);
   // carpet scuff: short filtered noise burst
   const src = ctx.createBufferSource();
   src.buffer = noiseBuf;
   const f = ctx.createBiquadFilter();
   f.type = 'lowpass';
-  f.frequency.value = running ? 500 : 330;
+  f.frequency.value = running ? 640 : 330;
   const g = ctx.createGain();
   g.gain.setValueAtTime(vol, t);
-  g.gain.exponentialRampToValueAtTime(0.001, t + 0.09);
+  g.gain.exponentialRampToValueAtTime(0.001, t + (running ? 0.12 : 0.09));
   src.connect(f).connect(g).connect(ctx.destination);
-  src.start(t, Math.random() * 0.5, 0.12);
-  // heel weight
-  thud(t, 65 + Math.random() * 25, vol * 0.9, 0.07);
+  src.start(t, Math.random() * 0.5, 0.14);
+  // heel weight, heavier at a run
+  thud(t, running ? 80 + Math.random() * 25 : 65 + Math.random() * 25, vol * (running ? 1.1 : 0.9), running ? 0.09 : 0.07);
 }
 
 // the entity's knocking footfall — hollow, lower than the player's own steps

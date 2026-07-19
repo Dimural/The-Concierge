@@ -96,9 +96,10 @@ export function createGhost(scene) {
   const { root, legL, legR, torso, headG } = buildFigure();
   scene.add(root);
 
-  let node = 4; // spawns far east on corridor A
-  let prevNode = 3;
-  root.position.set(NODES[node][0], 0, NODES[node][1]);
+  // spawns in corridor B beside the player's spawn point, already mid-shamble
+  let node = 7;
+  let prevNode = 6;
+  root.position.set(132, 0, 115);
 
   let state = 'walk';
   let stateT = 0;
@@ -119,6 +120,12 @@ export function createGhost(scene) {
     target = new THREE.Vector2(NODES[next][0], NODES[next][1]);
   }
 
+  function startWalkTo(n) {
+    prevNode = node;
+    node = n;
+    target = new THREE.Vector2(NODES[n][0], NODES[n][1]);
+  }
+
   function chooseState() {
     const r = Math.random();
     if (r < 0.5) { state = 'walk'; stateDur = Infinity; if (!target) pickNext(); }
@@ -126,7 +133,7 @@ export function createGhost(scene) {
     else if (r < 0.9) { state = 'listen'; stateDur = 3 + Math.random() * 3; }
     else { state = 'skitter'; stateDur = 1 + Math.random() * 1.4; }
   }
-  pickNext();
+  startWalkTo(8); // first target: east along corridor B, past the planter
 
   return {
     object: root,

@@ -28,6 +28,7 @@ export class Player {
     this.bobPhase = 0;
     this.stepAccum = 0;
     this.landDip = 0;
+    this.noise = 0; // 0..1 how much sound the player is making (the entity's future hearing)
     this.onFootstep = null; // (running: bool) => void
     this.onLand = null; // (fallSpeed: number) => void
     this.keys = new Set();
@@ -115,6 +116,7 @@ export class Player {
         ny = hitY.y1; // land
         if (!this.grounded && this.vel.y < -8) {
           this.landDip = Math.min(0.6, -this.vel.y * 0.022);
+          this.noise = Math.min(1, this.noise + 0.7);
           this.onLand?.(-this.vel.y);
         }
         this.vel.y = 0;
@@ -153,13 +155,17 @@ export class Player {
       this.stepAccum += dPhase;
       if (this.stepAccum >= Math.PI) {
         this.stepAccum -= Math.PI;
-        if (!this.prone) this.onFootstep?.(running);
+        if (!this.prone) {
+          this.noise = Math.min(1, this.noise + (running ? 0.55 : 0.16));
+          this.onFootstep?.(running);
+        }
       }
     } else {
       this.bobPhase *= 1 - Math.min(1, dt * 4);
       this.stepAccum = Math.PI * 0.6; // next step lands shortly after moving again
     }
     this.landDip *= 1 - Math.min(1, dt * 7);
+    this.noise *= 1 - Math.min(1, dt * 2.2); // sound fades from the air quickly
     const bobAmp = this.prone ? 0.05 : running ? 0.24 : 0.13;
     const bob = Math.sin(this.bobPhase) * bobAmp * Math.min(1, hSpeed / WALK);
     const breathe = Math.sin(performance.now() * 0.0012) * 0.02;
