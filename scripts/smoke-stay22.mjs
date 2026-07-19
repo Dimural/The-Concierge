@@ -234,6 +234,32 @@ async function runClueUnitTests() {
     console.log('FAIL empty session threw:', err);
   }
   check(!threw, 'empty session ({}) does not throw for clues/frontDesk generation');
+
+  // Regression: edge cases where decoys could collide with correct answer.
+  // Rating = 10: decoyMid would clamp to 10 (collision). Rating = 0: decoyLow
+  // and decoyHigh both clamp to 0 (collision). finishQuestion must handle this.
+  const edgeSession10 = {
+    ...fullSession,
+    property: { ...fullSession.property, rating: 10 },
+  };
+  assertFrontDeskShape(edgeSession10, 'rating=10 edge case');
+
+  const edgeSession0 = {
+    ...fullSession,
+    property: { ...fullSession.property, rating: 0 },
+  };
+  assertFrontDeskShape(edgeSession0, 'rating=0 edge case');
+
+  // Also test with max stars if applicable.
+  const edgeSessionMaxStars = {
+    ...fullSession,
+    property: {
+      ...fullSession.property,
+      rating: 10,
+      stars: 5,
+    },
+  };
+  assertFrontDeskShape(edgeSessionMaxStars, 'rating=10, stars=5 edge case');
 }
 
 await runServerChecks();

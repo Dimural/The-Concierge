@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite';
+import { loadEnv } from './server/env.mjs';
 
-// server/index.mjs listens on this port (see STAY22_SERVER_PORT in .env.example).
+// Load .env so vite and server agree on the port (see STAY22_SERVER_PORT in .env.example).
+loadEnv();
 const STAY22_SERVER_PORT = process.env.STAY22_SERVER_PORT || process.env.PORT || 8787;
 
 export default defineConfig({

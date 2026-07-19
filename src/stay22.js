@@ -96,15 +96,117 @@ function clamp(n, lo, hi) {
   return Math.min(hi, Math.max(lo, n));
 }
 
-function identityQuestion(name) {
-  const decoys = ['The Royal Windsor', 'Hotel Meridian', 'The Kensington Arms'];
-  const options = [decoys[0], decoys[1], name, decoys[2]];
+// finishQuestion: shared helper that ensures exactly 4 distinct options with
+// the correct answer at a deterministically shuffled position. If fewer than 3
+// distinct decoys remain after formatting/deduping, generates replacements by
+// stepping further from the correct value (for numeric) or from a spare-decoy
+// list (for non-numeric).
+// - id: question id
+// - label: question label
+// - correctOption: the correct value (numeric or string, before formatting)
+// - decoyCandidates: array of candidate decoy values
+// - spareDecoys: fallback decoy list for non-numeric questions
+// - formatter: function(value) => string; if omitted, uses String()
+// - isNumeric: if true, generates numeric replacements; if false, uses spareDecoys
+// - numericRange: [min,max] keeping numeric replacements plausible (e.g. a
+//   rating decoy must stay on the 0..10 scale); only exceeded as a last resort
+function finishQuestion(
+  id,
+  label,
+  correctOption,
+  decoyCandidates,
+  spareDecoys = [],
+  formatter = String,
+  isNumeric = false,
+  numericRange = null,
+) {
+  const correctStr = formatter(correctOption);
+  const seen = new Set([correctStr]);
+  const rawDecoys = []; // raw (unformatted) decoys
+  const formattedDecoys = []; // formatted decoys
+
+  // First pass: format and dedupe decoy candidates.
+  for (const decoy of decoyCandidates) {
+    const decoyStr = formatter(decoy);
+    if (!seen.has(decoyStr)) {
+      seen.add(decoyStr);
+      rawDecoys.push(decoy);
+      formattedDecoys.push(decoyStr);
+    }
+  }
+
+  // If fewer than 3 distinct decoys, generate replacements.
+  if (formattedDecoys.length < 3) {
+    // For numeric questions, step away from the correct value in both
+    // directions, staying inside numericRange so decoys remain plausible.
+    if (isNumeric) {
+      const inRange = (v) =>
+        !numericRange || (v >= numericRange[0] && v <= numericRange[1]);
+      for (const respectRange of [true, false]) {
+        for (let step = 1; formattedDecoys.length < 3 && step <= 100; step++) {
+          for (const dir of [-1, 1]) {
+            if (formattedDecoys.length >= 3) break;
+            const candidate = Number(correctOption) + dir * step;
+            if (respectRange && !inRange(candidate)) continue;
+            const candidateStr = formatter(candidate);
+            if (!seen.has(candidateStr)) {
+              seen.add(candidateStr);
+              rawDecoys.push(candidate);
+              formattedDecoys.push(candidateStr);
+            }
+          }
+        }
+        if (formattedDecoys.length >= 3) break;
+      }
+    } else {
+      // For non-numeric, use spare-decoy list.
+      for (const spare of spareDecoys) {
+        if (formattedDecoys.length >= 3) break;
+        const spareStr = formatter(spare);
+        if (!seen.has(spareStr)) {
+          seen.add(spareStr);
+          formattedDecoys.push(spareStr);
+        }
+      }
+    }
+  }
+
+  // Ensure exactly 3 decoys for a 4-option question.
+  const finalDecoys = formattedDecoys.slice(0, 3);
+
+  // Shuffle the 4 options (correct + 3 decoys) deterministically using a
+  // stable sort keyed by (id, option string) so the same question always
+  // shuffles the same way, but the user doesn't know the pattern.
+  const allOptions = [correctStr, ...finalDecoys];
+  const withIndices = allOptions.map((opt, idx) => ({
+    opt,
+    origIdx: idx,
+    sortKey: `${id}/${opt}`,
+  }));
+  withIndices.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
+
+  const shuffled = withIndices.map((item) => item.opt);
+  const answerIndex = withIndices.findIndex((item) => item.origIdx === 0);
+
   return {
-    id: 'identity',
-    label: 'THE LEDGER DEMANDS A NAME. WHICH PROPERTY DOES IT KEEP?',
-    options,
-    answerIndex: 2,
+    id,
+    label,
+    options: shuffled,
+    answerIndex,
   };
+}
+
+function identityQuestion(name) {
+  const spareDecoys = ['The Royal Windsor', 'Hotel Meridian', 'The Kensington Arms'];
+  return finishQuestion(
+    'identity',
+    'THE LEDGER DEMANDS A NAME. WHICH PROPERTY DOES IT KEEP?',
+    name,
+    spareDecoys,
+    spareDecoys,
+    String,
+    false, // isNumeric
+  );
 }
 
 function ratingQuestion(rating) {
@@ -112,27 +214,32 @@ function ratingQuestion(rating) {
   const decoyLow = clamp(round1(base - 1.3), 0, 10);
   const decoyMid = clamp(round1(base + 0.7), 0, 10);
   const decoyHigh = clamp(round1(base - 2.1), 0, 10);
-  const options = [decoyLow, base, decoyMid, decoyHigh].map((v) => `${v.toFixed(1)} / 10`);
-  return {
-    id: 'rating',
-    label: 'THE LEDGER REMEMBERS A SCORE. WHAT DID THE GUESTS SAY BEFORE THEY STOPPED SAYING ANYTHING?',
-    options,
-    answerIndex: 1,
-  };
+  const candidates = [decoyLow, decoyMid, decoyHigh];
+  return finishQuestion(
+    'rating',
+    'THE LEDGER REMEMBERS A SCORE. WHAT DID THE GUESTS SAY BEFORE THEY STOPPED SAYING ANYTHING?',
+    base,
+    candidates,
+    [],
+    (v) => `${v.toFixed(1)} / 10`,
+    true, // isNumeric
+    [0, 10], // decoys must stay on the rating scale
+  );
 }
 
 function supplierCountQuestion(count) {
   const c = Math.max(1, Math.round(count));
   const candidates = [c - 2, c - 1, c + 1, c + 2, c + 3].filter((v) => v > 0 && v !== c);
-  const unique = [...new Set(candidates)].slice(0, 3);
-  while (unique.length < 3) unique.push(c + unique.length + 4);
-  const options = [String(unique[0]), String(unique[1]), String(c), String(unique[2])];
-  return {
-    id: 'suppliers',
-    label: 'HOW MANY CHANNELS FED THIS ROOM TO THE WORLD?',
-    options,
-    answerIndex: 2,
-  };
+  return finishQuestion(
+    'suppliers',
+    'HOW MANY CHANNELS FED THIS ROOM TO THE WORLD?',
+    c,
+    candidates,
+    [],
+    String,
+    true, // isNumeric
+    [1, 99], // supplier counts stay positive
+  );
 }
 
 function policyQuestion(freeCancellation, instantBooking) {
@@ -144,13 +251,15 @@ function policyQuestion(freeCancellation, instantBooking) {
   ];
   const correctText = combos.find((c) => c.free === freeCancellation && c.instant === instantBooking).text;
   const decoyTexts = combos.filter((c) => c.text !== correctText).map((c) => c.text);
-  const options = [decoyTexts[0], correctText, decoyTexts[1], decoyTexts[2]];
-  return {
-    id: 'policy',
-    label: 'WHAT DOES THE RESERVATION RULES ENGINE DEMAND OF THIS ROOM?',
-    options,
-    answerIndex: 1,
-  };
+  return finishQuestion(
+    'policy',
+    'WHAT DOES THE RESERVATION RULES ENGINE DEMAND OF THIS ROOM?',
+    correctText,
+    decoyTexts,
+    decoyTexts,
+    String,
+    false, // isNumeric
+  );
 }
 
 export function generateFrontDesk(session) {
