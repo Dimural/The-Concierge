@@ -35,6 +35,7 @@ export function createFallbackEngine() {
   let ctx2d = null;
   let intervalId = null;
   let running = false;
+  let onSampleCb = null;
 
   let talkingState = createTalkingState();
   let breathingState = createBreathingState();
@@ -111,7 +112,12 @@ export function createFallbackEngine() {
     return { diff, centerVariance: variance, lighting: mean };
   }
 
-  function tick(onSample) {
+  function tick() {
+    // Chrome may leave an AudioContext created outside a live user gesture
+    // in 'suspended' state, which reads as flat silence; keep nudging it.
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume().catch(() => {});
+    }
     const audio = sampleAudio();
     const video = sampleVideo();
 
@@ -139,7 +145,7 @@ export function createFallbackEngine() {
       pulseBpm: null, // the local heuristic engine does not estimate pulse
     };
 
-    if (onSample) onSample(lastSample);
+    if (onSampleCb) onSampleCb(lastSample);
   }
 
   /**
@@ -149,6 +155,10 @@ export function createFallbackEngine() {
    * that's the calibration screen's job).
    */
   async function start(onSample) {
+    // Always adopt the newest consumer, even if capture is already live —
+    // calibration starts the engine first, then the game takes over the
+    // sample stream via its own start() call.
+    if (onSample) onSampleCb = onSample;
     if (running) return { ok: true, videoEl };
     try {
       mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -184,14 +194,17 @@ export function createFallbackEngine() {
     timeData = new Uint8Array(analyser.fftSize);
     freqData = new Uint8Array(analyser.frequencyBinCount);
 
+    if (audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+
     running = true;
-    intervalId = setInterval(() => tick(onSample), SAMPLE_INTERVAL_MS);
+    intervalId = setInterval(tick, SAMPLE_INTERVAL_MS);
 
     return { ok: true, videoEl };
   }
 
   function stop() {
     running = false;
+    onSampleCb = null;
     if (intervalId != null) {
       clearInterval(intervalId);
       intervalId = null;

@@ -258,6 +258,64 @@ check('setSimulated overrides report confidence 1 and are mode-agnostic', async 
   assert.equal(presage.signals.breathingConfidence, 0);
 });
 
+check('engine start() while running hands the sample stream to the new callback', async () => {
+  // Regression: calibration starts the engine with its own callback; the
+  // game's later start() call must take over the stream, not be ignored.
+  const fakeStream = { getTracks: () => [] };
+  globalThis.navigator = {
+    mediaDevices: { getUserMedia: async () => fakeStream },
+  };
+  globalThis.document = {
+    createElement: (tag) =>
+      tag === 'video'
+        ? { muted: false, playsInline: false, srcObject: null, readyState: 0, play: async () => {} }
+        : { width: 0, height: 0, getContext: () => null },
+  };
+  globalThis.window = {
+    AudioContext: class {
+      constructor() {
+        this.sampleRate = 48000;
+        this.state = 'running';
+      }
+      createMediaStreamSource() {
+        return { connect() {} };
+      }
+      createAnalyser() {
+        return {
+          fftSize: 1024,
+          smoothingTimeConstant: 0,
+          frequencyBinCount: 512,
+          getByteTimeDomainData(a) { a.fill(128); },
+          getByteFrequencyData(a) { a.fill(0); },
+        };
+      }
+      async resume() {}
+      async close() {}
+    },
+  };
+  try {
+    const { createFallbackEngine } = await import('./engine.js');
+    const eng = createFallbackEngine();
+    let calibrationSamples = 0;
+    let gameSamples = 0;
+    const r1 = await eng.start(() => calibrationSamples++);
+    assert.equal(r1.ok, true);
+    await new Promise((r) => setTimeout(r, 200));
+    assert.ok(calibrationSamples > 0, 'calibration callback should receive samples');
+    const r2 = await eng.start(() => gameSamples++); // engine already running
+    assert.equal(r2.ok, true);
+    const before = calibrationSamples;
+    await new Promise((r) => setTimeout(r, 200));
+    assert.ok(gameSamples > 0, 'second start() callback must take over the stream');
+    assert.equal(calibrationSamples, before, 'old callback must stop receiving samples');
+    eng.stop();
+  } finally {
+    delete globalThis.navigator;
+    delete globalThis.document;
+    delete globalThis.window;
+  }
+});
+
 await Promise.all(pending);
 
 console.log(`\n${count - failures}/${count} checks passed`);
