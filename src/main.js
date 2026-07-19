@@ -9,6 +9,7 @@ import { Player } from './player.js';
 import { initAudio, footstep, landThump } from './audio.js';
 import { initUI } from './ui.js';
 import { createGhost } from './ghost.js';
+import { noiseBus } from './noise.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -48,14 +49,21 @@ let hideVolumes = [];
 }
 
 const lighting = makeLighting(scene);
-const ghost = createGhost(scene);
+const ghost = createGhost(scene, colliders);
 const player = new Player(camera, colliders, SPAWN, hideVolumes);
-player.onFootstep = footstep;
-player.onLand = landThump;
+// wrap the existing sound hooks so the entity's noise bus hears the player too
+player.onFootstep = (running) => {
+  footstep(running);
+  noiseBus.emit(player.pos.x, player.pos.z, running ? 0.55 : 0.16, running ? 'run' : 'footstep');
+};
+player.onLand = (fallSpeed) => {
+  landThump(fallSpeed);
+  noiseBus.emit(player.pos.x, player.pos.z, Math.min(1.5, 0.5 + fallSpeed * 0.03), 'land');
+};
 camera.position.set(SPAWN.x, SPAWN.y + 5.4, SPAWN.z);
 camera.rotation.order = 'YXZ';
 camera.rotation.y = SPAWN.yaw;
-window.__concierge = { player, camera, scene, ghost };
+window.__concierge = { player, camera, scene, ghost, noiseBus };
 
 // --- input
 const input = { keys: new Set(), jumpQueued: false };
@@ -102,7 +110,7 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (document.pointerLockElement === renderer.domElement) {
     player.update(dt, input);
-    ghost.update(dt, player.pos);
+    ghost.update(dt, { pos: player.pos, concealed: player.concealed });
     vignetteEl.classList.toggle('concealed', player.concealed);
   }
   lighting.update(dt, camera);
