@@ -39,15 +39,17 @@ for (const build of [buildEscalator, buildOval]) {
   scene.add(group);
   colliders.push(...c);
 }
+let hideVolumes = [];
 {
-  const { group, colliders: c } = buildProps(floors, mats);
+  const { group, colliders: c, hideVolumes: hv } = buildProps(floors, mats);
   scene.add(group);
   colliders.push(...c);
+  hideVolumes = hv;
 }
 
 const lighting = makeLighting(scene);
 const ghost = createGhost(scene);
-const player = new Player(camera, colliders, SPAWN);
+const player = new Player(camera, colliders, SPAWN, hideVolumes);
 player.onFootstep = footstep;
 player.onLand = landThump;
 camera.position.set(SPAWN.x, SPAWN.y + 5.4, SPAWN.z);
@@ -58,6 +60,7 @@ window.__concierge = { player, camera, scene, ghost };
 // --- input
 const input = { keys: new Set(), jumpQueued: false };
 const overlay = document.getElementById('overlay');
+const vignetteEl = document.getElementById('vignette');
 
 document.addEventListener('keydown', (e) => {
   if (e.repeat) return;
@@ -100,6 +103,7 @@ renderer.setAnimationLoop(() => {
   if (document.pointerLockElement === renderer.domElement) {
     player.update(dt, input);
     ghost.update(dt, player.pos);
+    vignetteEl.classList.toggle('concealed', player.concealed);
   }
   lighting.update(dt, camera);
   renderer.render(scene, camera);
