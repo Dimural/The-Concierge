@@ -32,8 +32,9 @@ const colliders = [];
 for (const f of floors) colliders.push(...buildFloor(f, mats).colliders);
 colliders.push(...buildEscalator(mats).colliders);
 colliders.push(...buildOval(mats).colliders);
-colliders.push(...buildProps(floors, mats).colliders);
-console.log(`colliders: ${colliders.length}`);
+const props = buildProps(floors, mats);
+colliders.push(...props.colliders);
+console.log(`colliders: ${colliders.length}, props colliders: ${props.colliders.length}, hideVolumes: ${props.hideVolumes.length}`);
 
 const camera = new THREE.PerspectiveCamera();
 let failures = 0;
@@ -114,6 +115,13 @@ const forward = () => ({ keys: new Set(['KeyW']), jumpQueued: false });
   for (let i = 0; i < 90; i++) { p.update(dt, input); peak = Math.max(peak, p.pos.y); }
   check(peak > MEZZ_Y + 1.5, `jump peak ${peak.toFixed(2)}ft above floor`);
   check(Math.abs(p.pos.y - MEZZ_Y) < 0.01, 'landed after jump');
+}
+
+// 8. table/boardroom-table hideVolumes are thin slabs, not floor-to-top blobs
+{
+  check(props.hideVolumes.length > 0, `hideVolumes populated (${props.hideVolumes.length})`);
+  const thin = props.hideVolumes.every((v) => (v.y1 - v.y0) < 1);
+  check(thin, 'every hideVolume is a thin slab (<1ft tall)');
 }
 
 if (failures) { console.error(`${failures} failure(s)`); process.exit(1); }

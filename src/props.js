@@ -63,6 +63,7 @@ export function buildProps(floors, mats) {
   const chairT = [];
   const tableT = [];
   const clothT = []; // toppled tables keep same geometry, different tilt
+  const hideVolumes = []; // thin tabletop slabs the player can crouch under
 
   function banquetSetup(key, nTables, topple = 0.2) {
     const r = roomByName.get(key);
@@ -80,7 +81,12 @@ export function buildProps(floors, mats) {
           clothT.push({ x, y: r.y + 1.3, z, rz: Math.PI / 2, ry: rand() * Math.PI });
         } else {
           tableT.push({ x, y: r.y, z });
-          colliders.push(aabb(x - 2.7, x + 2.7, r.y, r.y + 2.5, z - 2.7, z + 2.7));
+          // pedestal: thin center post, leaves the footprint open for crawling under
+          colliders.push(aabb(x - 0.6, x + 0.6, r.y, r.y + 2.2, z - 0.6, z + 0.6));
+          // tabletop: thin slab above prone height (2.0ft), a real ceiling to crouch under
+          const slab = aabb(x - 2.9, x + 2.9, r.y + 2.2, r.y + 2.55, z - 2.9, z + 2.9);
+          colliders.push(slab);
+          hideVolumes.push(slab);
           const n = 2 + Math.floor(rand() * 4);
           for (let k = 0; k < n; k++) {
             const a = rand() * Math.PI * 2;
@@ -203,5 +209,5 @@ export function buildProps(floors, mats) {
     group.add(mesh);
   }
 
-  return { group, colliders };
+  return { group, colliders, hideVolumes };
 }
