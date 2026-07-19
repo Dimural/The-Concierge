@@ -40,10 +40,13 @@ async function waitForServer(timeoutMs = 8000) {
 async function runServerChecks() {
   // Explicitly scrub any inherited key so this test always exercises the
   // no-key fallback path, per the "works perfectly with no key" requirement.
+  // Set to '' rather than delete: the server's loadEnv() only skips vars
+  // already present in the environment, so a deleted var would be refilled
+  // from the developer's real .env and flip the server into live mode.
   const env = { ...process.env };
-  delete env.STAY22_API_KEY;
+  env.STAY22_API_KEY = '';
   env.STAY22_SERVER_PORT = String(PORT);
-  delete env.STAY22_CAMPAIGN_ID; // exercise the default campaign id too
+  env.STAY22_CAMPAIGN_ID = ''; // exercise the default campaign id too
 
   const child = spawn(process.execPath, [path.join(root, 'server', 'index.mjs')], {
     cwd: root,

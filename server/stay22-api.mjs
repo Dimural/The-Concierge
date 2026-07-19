@@ -87,8 +87,19 @@ export function mapAccommodationsResponse(json, { campaign, checkin, checkout })
     json?.results ?? json?.accommodations ?? json?.data ?? (Array.isArray(json) ? json : []);
   if (!Array.isArray(results) || results.length === 0) return null;
 
+  // Several listings can match "royal york" (the main hotel plus sub-
+  // listings like "Gold Experience"); prefer the one with the most reviews,
+  // then the most active suppliers — that's the primary property record.
+  const royalYorkMatches = results.filter(
+    (r) => typeof r?.name === 'string' && /royal york/i.test(r.name),
+  );
+  const supplierCountOf = (r) =>
+    r?.suppliers && typeof r.suppliers === 'object'
+      ? Object.keys(r.suppliers).filter((k) => r.suppliers[k]).length
+      : 0;
+  const scoreOf = (r) => (r?.rating?.count ?? 0) * 100 + supplierCountOf(r);
   const match =
-    results.find((r) => typeof r?.name === 'string' && /royal york/i.test(r.name)) ?? results[0];
+    royalYorkMatches.sort((a, b) => scoreOf(b) - scoreOf(a))[0] ?? results[0];
   if (!match) return null;
 
   const suppliersObj = match?.suppliers && typeof match.suppliers === 'object' ? match.suppliers : {};
