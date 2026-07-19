@@ -43,6 +43,43 @@ export function footstep(running) {
   thud(t, 65 + Math.random() * 25, vol * 0.9, 0.07);
 }
 
+// the entity's knocking footfall — hollow, lower than the player's own steps
+export function ghostStep(gain) {
+  if (!ctx || ctx.state !== 'running') return;
+  const t = ctx.currentTime;
+  const vol = 0.32 * gain;
+  thud(t, 38 + Math.random() * 8, vol, 0.15);
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter();
+  f.type = 'lowpass';
+  f.frequency.value = 190;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(vol * 0.5, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+  src.connect(f).connect(g).connect(ctx.destination);
+  src.start(t, Math.random() * 0.5, 0.14);
+}
+
+// a long dry exhale when he lingers nearby
+export function ghostBreath(gain) {
+  if (!ctx || ctx.state !== 'running') return;
+  const t = ctx.currentTime;
+  const src = ctx.createBufferSource();
+  src.buffer = noiseBuf;
+  const f = ctx.createBiquadFilter();
+  f.type = 'bandpass';
+  f.frequency.setValueAtTime(210, t);
+  f.frequency.linearRampToValueAtTime(130, t + 1.6);
+  f.Q.value = 1.4;
+  const g = ctx.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(0.13 * gain, t + 0.5);
+  g.gain.exponentialRampToValueAtTime(0.001, t + 1.7);
+  src.connect(f).connect(g).connect(ctx.destination);
+  src.start(t, Math.random() * 0.4, 1.8);
+}
+
 export function landThump(strength) {
   if (!ctx || ctx.state !== 'running') return;
   const t = ctx.currentTime;

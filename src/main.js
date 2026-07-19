@@ -8,6 +8,7 @@ import { makeLighting } from './lights.js';
 import { Player } from './player.js';
 import { initAudio, footstep, landThump } from './audio.js';
 import { initUI } from './ui.js';
+import { createGhost } from './ghost.js';
 
 const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -45,13 +46,14 @@ for (const build of [buildEscalator, buildOval]) {
 }
 
 const lighting = makeLighting(scene);
+const ghost = createGhost(scene);
 const player = new Player(camera, colliders, SPAWN);
 player.onFootstep = footstep;
 player.onLand = landThump;
 camera.position.set(SPAWN.x, SPAWN.y + 5.4, SPAWN.z);
 camera.rotation.order = 'YXZ';
 camera.rotation.y = SPAWN.yaw;
-window.__concierge = { player, camera, scene };
+window.__concierge = { player, camera, scene, ghost };
 
 // --- input
 const input = { keys: new Set(), jumpQueued: false };
@@ -97,6 +99,7 @@ renderer.setAnimationLoop(() => {
   const dt = Math.min(clock.getDelta(), 0.05);
   if (document.pointerLockElement === renderer.domElement) {
     player.update(dt, input);
+    ghost.update(dt, player.pos);
   }
   lighting.update(dt, camera);
   renderer.render(scene, camera);
