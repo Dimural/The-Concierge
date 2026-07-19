@@ -194,11 +194,17 @@
   <div id="app"></div>
   <div id="vignette"></div>
 
+  <!-- mount point for the Presage consent/calibration screens (src/presage/*);
+       plain unstyled div — those modules inject their own full-viewport
+       absolutely-positioned overlays regardless of this container's box. -->
+  <div id="entry-flow"></div>
+
   <div id="overlay">
     <div class="enter">CLICK TO RESUME</div>
     <div class="keys">
       WASD MOVE &middot; SHIFT RUN &middot; SPACE JUMP<br />
-      C LIE DOWN &middot; F FLASHLIGHT &middot; ESC RELEASE
+      C LIE DOWN &middot; F FLASHLIGHT &middot; E INTERACT<br />
+      TAB JOURNAL &middot; ` JUDGE PANEL &middot; ESC RELEASE
     </div>
   </div>
 

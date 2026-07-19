@@ -159,12 +159,20 @@ export function makeLighting(scene) {
   const aimDir = new THREE.Vector3(0, 0, -1);
   const wantDir = new THREE.Vector3();
 
+  // building-wide forced flicker window (New Arrival chain etc.) — overrides
+  // every live fixture's own pattern with a violent flicker for `sec` seconds
+  let flickerUntil = 0;
+
   return {
     toggleFlashlight() { flashOn = !flashOn; },
+    flicker(sec = 2.2) { flickerUntil = Math.max(flickerUntil, performance.now() / 1000 + sec); },
     update(dt, camera) {
       const t = performance.now() / 1000;
+      const forced = t < flickerUntil;
       for (const f of live) {
-        const v = pattern(f.state, t, f.seed);
+        const v = forced
+          ? pattern('flicker', t, f.seed) * (0.35 + 0.65 * vnoise(t * 23 + f.seed))
+          : pattern(f.state, t, f.seed);
         f.light.intensity = f.base * v;
         f.glassMat.emissiveIntensity = v * 2.2;
       }

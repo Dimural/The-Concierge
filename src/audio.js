@@ -81,6 +81,63 @@ export function ghostBreath(gain) {
   src.start(t, Math.random() * 0.4, 1.8);
 }
 
+// the front-desk/arrival bell — a bright, metallic strike with tuned
+// overtones, used by the game loop's onBell hook (wrong ledger submission,
+// new-arrival chain). Distinct from src/game/sfx.js's own deskBell() so the
+// two can layer without fighting over one AudioContext.
+export function bell() {
+  if (!ctx || ctx.state !== 'running') return;
+  const t = ctx.currentTime;
+  const overtones = [988, 1480, 1975]; // bright metallic strike, roughly a fifth+octave stack
+  overtones.forEach((freq, i) => {
+    const o = ctx.createOscillator();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.22 / (i + 1), t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 1.4 - i * 0.15);
+    o.connect(g).connect(ctx.destination);
+    o.start(t);
+    o.stop(t + 1.5);
+  });
+}
+
+// dot-matrix printer chatter — a low motor whine plus a rapid burst of
+// filtered noise "clacks", for the archive generators printing a restored
+// record (wired to the game loop's onGeneratorSound hook).
+export function printer() {
+  if (!ctx || ctx.state !== 'running') return;
+  const t = ctx.currentTime;
+  const motor = ctx.createOscillator();
+  motor.type = 'square';
+  motor.frequency.setValueAtTime(180, t);
+  motor.frequency.linearRampToValueAtTime(140, t + 0.6);
+  const motorGain = ctx.createGain();
+  motorGain.gain.setValueAtTime(0.0001, t);
+  motorGain.gain.exponentialRampToValueAtTime(0.05, t + 0.05);
+  motorGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.6);
+  motor.connect(motorGain).connect(ctx.destination);
+  motor.start(t);
+  motor.stop(t + 0.65);
+
+  const clacks = 10;
+  for (let i = 0; i < clacks; i++) {
+    const ct = t + i * 0.05 + Math.random() * 0.01;
+    const src = ctx.createBufferSource();
+    src.buffer = noiseBuf;
+    const f = ctx.createBiquadFilter();
+    f.type = 'bandpass';
+    f.frequency.value = 2200 + Math.random() * 800;
+    f.Q.value = 4;
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.09, ct);
+    g.gain.exponentialRampToValueAtTime(0.001, ct + 0.03);
+    src.connect(f).connect(g).connect(ctx.destination);
+    src.start(ct, Math.random() * 0.4, 0.04);
+  }
+}
+
 export function landThump(strength) {
   if (!ctx || ctx.state !== 'running') return;
   const t = ctx.currentTime;
