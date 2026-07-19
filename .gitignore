@@ -1,5 +1,6 @@
 node_modules/
 dist/
+shots/
 *.pdf
 README-4.md
 .DS_Store

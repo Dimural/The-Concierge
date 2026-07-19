@@ -10,9 +10,11 @@
     "check:layout": "node scripts/check-layout.mjs",
     "check:physics": "node scripts/smoke-physics.mjs",
     "shots": "node scripts/screenshot.mjs",
+    "shots:flow": "node scripts/shots-flow.mjs",
     "server": "node server/index.mjs",
     "dev:all": "node scripts/dev-all.mjs",
-    "check:stay22": "node scripts/smoke-stay22.mjs"
+    "check:stay22": "node scripts/smoke-stay22.mjs",
+    "check:entity": "node scripts/smoke-entity.mjs"
   },
   "dependencies": {
     "three": "^0.166.0"

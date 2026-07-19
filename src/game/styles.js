@@ -51,6 +51,11 @@ const CSS = `
   font-size: 0.62rem; letter-spacing: 0.1em; color: #c98; background: rgba(8,6,4,0.5);
   padding: 0.35em 0.6em; border: 1px solid rgba(200,150,80,0.3);
 }
+/* an authored display value above beats the UA stylesheet's [hidden]{display:none},
+   so it has to be restated explicitly or this indicator (and the promise in
+   the consent copy that it only shows while capture is actually running)
+   never actually hides. */
+.cg-capture[hidden] { display: none; }
 .cg-capture-dot {
   width: 8px; height: 8px; border-radius: 50%; background: #d0463b;
   box-shadow: 0 0 8px #d0463b; animation: cg-dot-blink 1.4s infinite;
@@ -80,6 +85,10 @@ const CSS = `
 }
 .cg-arrival-banner.cg-flash { animation: cg-banner-flash 0.5s ease 2; }
 @keyframes cg-banner-flash { 0%, 100% { background: rgba(30,4,4,0.35); } 50% { background: rgba(90,8,8,0.6); } }
+/* same [hidden]-vs-authored-display issue as .cg-capture above: without this,
+   the full-screen banner (and its background tint) never actually hides
+   between New Arrival events. */
+.cg-arrival-banner[hidden] { display: none; }
 
 .cg-toast {
   position: absolute; bottom: 18vh; left: 50%; transform: translateX(-50%);
@@ -91,12 +100,21 @@ const CSS = `
 
 /* ------------------------------ screens -------------------------------- */
 .cg-screen {
-  position: fixed; inset: 0; z-index: 40; display: flex; align-items: center; justify-content: center;
+  position: fixed; inset: 0; z-index: 40; display: flex;
   background: var(--void, #070605); color: var(--bone, #e9e3d0); opacity: 0; transition: opacity 0.6s ease;
   text-align: center; padding: 4vh 4vw; overflow-y: auto;
 }
 .cg-screen.cg-in { opacity: 1; }
 .cg-screen.cg-out { opacity: 0; }
+/* margin:auto on the single child centers it exactly like align-items +
+   justify-content: center would for content that fits, but — unlike
+   align-items: center — degrades gracefully when content is taller than
+   the viewport: it settles at the scroll container's top edge instead of
+   centering into negative, unreachable-by-scroll space. The front-desk
+   ledger (4 questions + forgiveness note + submit button) routinely
+   overflows a 1280x720 viewport, which was clipping its header off-screen
+   with no way to scroll up to it. */
+.cg-screen > * { margin: auto; }
 
 .cg-arrival-screen .cg-arrival-text p {
   letter-spacing: 0.14em; line-height: 2.1; font-size: clamp(0.85rem, 2vw, 1.15rem);

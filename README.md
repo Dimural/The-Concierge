@@ -196,10 +196,17 @@ You are never asked to hold your breath or restrict normal breathing. The game r
 
 ### Build and test
 ```bash
-npm run build          # Production bundle
-npm run check:physics  # Collision detection verification
-npm run check:layout   # Room layout sanity check
-npm run check:stay22   # Start server; verify /api/session shape
+npm run build            # Production bundle
+npm run check:physics    # Collision detection verification
+npm run check:layout     # Room layout sanity check
+npm run check:stay22     # Start server; verify /api/session shape
+npm run check:entity     # Entity senses/state-machine pure-function tests
+node src/game/smoke-game.mjs      # Generator/desk/dedupe logic tests
+node src/presage/smoke-presage.mjs # Talking/breathing detector tests
+npm run shots             # Screenshot the built hotel from fixed camera spots
+npm run shots:flow        # Puppeteer run of the full judge-facing flow (landing
+                           # -> consent(reduced) -> HUD -> judge panel -> New
+                           # Arrival -> front desk -> win); saves to shots/flow/
 ```
 
 ### Judge Panel (in-game, press Backquote)
