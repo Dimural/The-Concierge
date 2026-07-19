@@ -1,247 +1,254 @@
-# The Concierge
+<div align="center">
 
-**The Concierge is a first-person horror game where players enter corrupted versions of real hotels, use live Stay22 booking data to restore each hotel's identity, and survive an entity that can hear their talking and breathing through camera-based biometrics—while attributed Stay22 bookings cause the entity to uncover its eyes and hunt.**
+<img src="docs/media/landing.jpg" alt="The Concierge — a corrupted 1929 newspaper front page. THE HOTELS REMEMBER." width="900"/>
 
-Most hotel products show the same listing cards in the same way. This project turns live accommodation data into a playable experience: a carefully corrupted 3D recreation of a real property, mysterious clues derived from current booking rates and supplier records, and a blind entity that listens to your voice and breathing patterns. Survive, restore the hotel's real identity at the front desk, and escape during a final hunt—then optionally book the actual property through a disclosed affiliate link.
+# T H E &nbsp; C O N C I E R G E
 
-**30-second pitch:** Everyone can build a hotel search. We built a hotel you can enter. Stay22's inventory becomes the mystery; its booking links monetize the experience; its transaction ledger changes the monster live. Presage makes the player's own physiology part of the stealth system.
+### *The hotels remember.*
 
-## Quick Start
+**A first-person horror game built inside a real hotel — where live booking data is the mystery,<br/>your own voice and breath are the stealth system, and every real booking makes the monster open its eyes.**
 
-### Zero-config demo
+<br/>
+
+![three.js](https://img.shields.io/badge/three.js-r166-0a0a0a?style=for-the-badge&logo=threedotjs&logoColor=e8dcc0)
+![Vite](https://img.shields.io/badge/vite-5-0a0a0a?style=for-the-badge&logo=vite&logoColor=e8dcc0)
+![Node](https://img.shields.io/badge/node-server%2C%20zero%20deps-0a0a0a?style=for-the-badge&logo=nodedotjs&logoColor=e8dcc0)
+![Stay22](https://img.shields.io/badge/stay22-live%20hotel%20data-6b0f0f?style=for-the-badge)
+![Presage](https://img.shields.io/badge/presage-biometric%20stealth-6b0f0f?style=for-the-badge)
+![No API keys required](https://img.shields.io/badge/api%20keys-optional-2d4a2d?style=for-the-badge)
+
+<br/>
+
+*Everyone can build a hotel search. We built a hotel you can enter.*
+
+</div>
+
+---
+
+## ▍The premise
+
+The **Fairmont Royal York** — Toronto's grand 1929 railway hotel — has been rebuilt in three.js from its real floor plans, foot for foot. But something has corrupted its record. The rooms are dark. The ledger is blank. And the thing at the front desk — a decayed concierge, hands pressed over its eyes — hunts by **sound alone**.
+
+Live **Stay22** booking data is scattered through the hotel in four Archive Generators: the property's real name, its real guest rating, its real supplier channels, its real cancellation policy. Restore all four, reconstruct the corrupted record at the front desk, and escape during the final hunt — and the hotel comes back. Real address. Real rating. Real booking link.
+
+**And while you play, the hotel is still selling rooms.** Every real attributed booking that lands in the Stay22 transaction ledger rings the reception bell in-game:
+
+<div align="center">
+
+> ## `A NEW RESERVATION HAS ENTERED THE LEDGER`
+> ## `THE CONCIERGE CAN SEE`
+
+</div>
+
+…and for fifteen seconds, the entity takes its hands off its eyes.
+
+<div align="center">
+
+| The Concierge hunts blind — by sound | A booking lands. **He can see.** |
+|:---:|:---:|
+| <img src="docs/media/blind-patrol.jpg" width="440"/> | <img src="docs/media/he-can-see.jpg" width="440"/> |
+
+| Reconstruct the record from **live data** | Escape — and the hotel is real |
+|:---:|:---:|
+| <img src="docs/media/front-desk.jpg" width="440"/> | <img src="docs/media/win-screen.jpg" width="440"/> |
+
+</div>
+
+---
+
+## ▍Your body is the controller
+
+Before entering, the hotel performs **GUEST BIOMETRIC REGISTRATION** — an in-fiction, fully-disclosed consent and calibration flow.
+
+| Signal | How it's read | What it does |
+|---|---|---|
+| 🗣 **Talking** | Microphone — RMS + speech-band energy with hysteresis (or SmartSpectra) | A confident voice is a **beacon**. The entity turns and comes, immediately. |
+| 🫁 **Breathing** | Camera — temporal luminance motion, confidence-gated (or SmartSpectra) | Heavy, unstable breathing slowly raises its alertness. Stillness is rewarded. **You are never asked to hold your breath.** |
+| 👣 **Movement** | In-world noise bus | Running is heard from ~35 ft. Landing from a jump, further. Crouch-walking is nearly silent. |
+
+Three capture modes, chosen by *you* at the consent screen:
+
+- **`presage`** — real SmartSpectra session (server-side relay integration point, key-gated)
+- **`fallback`** — local mic/camera heuristics. **Nothing is ever recorded, stored, or uploaded.** A red `CAPTURE ACTIVE` mark is on screen whenever capture runs.
+- **`reduced`** — *"PROCEED UNREGISTERED."* Zero capture. The game is fully playable.
+
+---
+
+## ▍Quick start — zero keys, zero config
+
 ```bash
 npm install
-npm run dev:all
+npm run dev:all      # vite (:5173) + data server (:8787)
 ```
 
-Open http://localhost:5173 in your browser. The game runs entirely in **fallback/simulated mode**:
-- Stay22 property data comes from a bundled snapshot (honest label: `live: false`).
-- Presage biometrics use only your camera and microphone with local heuristics—nothing is recorded or uploaded.
-- Booking events are labeled `SIMULATED` when you trigger them.
+Open **http://localhost:5173**. That's it. With no keys, the game runs on a bundled Royal York snapshot (honestly badged `FALLBACK` in the judge panel) and simulated booking events (labelled `SIMULATED`).
 
-**Everything works without any API keys.**
+### Go live — drop in keys
 
-### Live mode (Stay22 + Presage)
-
-Drop keys into `.env`:
-```
-STAY22_API_KEY=your_key_here
-STAY22_CAMPAIGN_ID=your_campaign_id
-PRESAGE_API_KEY=your_presage_key
-```
-
-Then `npm run dev:all`. The game will:
-- Fetch live Fairmont Royal York property data (name, rating, suppliers, prices, policies) from Stay22.
-- Use SmartSpectra for real physiological detection if the Presage key is valid; otherwise fall back to local heuristics.
-- Detect real attributed bookings and trigger live monster hunts.
-
-**Why keys never reach the browser:** The Stay22 API server runs on Node (`npm run server` or `npm run dev:all`), handles all Stay22 requests, and only sends sanitized session data and transaction IDs to the client. The Presage key is used server-side only to provision the session; the browser uses only local capture processing or the official SmartSpectra SDK if available.
-
-**Optional single script:**
 ```bash
-npm run dev       # Vite dev server only (no server); falls back for Stay22/Presage
-npm run server    # Stay22 API server only (listens on :8787, default)
-npm run dev:all   # Both in parallel (Vite + server)
+# .env  (gitignored — keys never reach the browser)
+STAY22_API_KEY=...          # live property data + real transaction polling
+STAY22_CAMPAIGN_ID=...      # attributes bookings to your campaign
+PRESAGE_API_KEY=...         # reserved for the SmartSpectra relay (see below)
 ```
 
-## Controls
+| Key present | What changes |
+|---|---|
+| `STAY22_API_KEY` | The puzzle is built from **live data** — current rating, review count, supplier channels, real 2-night pricing. Real attributed bookings trigger the *He Can See* event in-game. Session badge flips to `LIVE`. |
+| `STAY22_CAMPAIGN_ID` | Tracked affiliate booking links + transaction filtering are attributed to your campaign. |
+| `PRESAGE_API_KEY` | Honest status: SmartSpectra ships Node/iOS/Android SDKs, not browser JS — the one-function server relay hookup is documented in [`src/presage/smartspectra.js`](src/presage/smartspectra.js). Until then the local engine does real talking/breathing detection with no key at all. |
+
+---
+
+## ▍The loop
+
+```mermaid
+flowchart LR
+    A["📰 Case file<br/>choose the hotel"] --> B["🎥 Consent +<br/>calibration"]
+    B --> C["🏨 Arrival<br/>the corrupted hotel"]
+    C --> D["⚙️ 4 Archive Generators<br/>each restores LIVE Stay22 data<br/><i>…and makes a lot of noise</i>"]
+    D --> E["🛎 Front desk<br/>reconstruct the record<br/>from the clues"]
+    E -->|wrong| H["👁 Short hunt<br/>(8s, sighted)"]
+    H --> E
+    E -->|correct| F["🔥 FINAL CHECKOUT AUTHORIZED<br/>final hunt — sight + sound"]
+    F --> G["🚪 Escape<br/>the hotel is real again"]
+    B -.->|🗣 talking / 🫁 breathing| X(("👂"))
+    X -.-> D
+    Y["💳 Real Stay22 booking<br/>lands in the ledger"] -.->|HE CAN SEE — 15s| D
+```
+
+Four generators, four rooms, two floors — each one restores a category of the record and each one is **loud**:
+
+| Generator | Location | Restores (live when keyed) |
+|---|---|---|
+| **A — Property Registry** | Reservation Office, Mezzanine | Name · type · address |
+| **B — Guest Ledger** | Library, Mezzanine | Guest rating · review count |
+| **C — Rate Engine** | Concert Hall, Convention Floor | 2-night price · supplier channels |
+| **D — Reservation Rules** | Ballroom, Convention Floor | Cancellation · instant booking · occupancy |
+
+The front desk asks four questions **answerable only from that data**. Stay22's inventory isn't set dressing — it is the win condition.
+
+---
+
+## ▍The entity
+
+A stop-motion, decayed concierge. Two states of being:
+
+**Blind (default)** — hands over its eyes. Navigates the node graph, investigates noise, escalates: `patrol → suspicious → pursuit`. Blind pursuit moves at **7.5 ft/s — faster than you walk**. While it's blind, hiding makes you untouchable. It listens; it does not see.
+
+**Sighted (earned by the world)** — a booking arrives, or you fail at the desk, or you authorize the final checkout. The hands come down, the eyes flare, and it hunts with line-of-sight at **9.9 ft/s** — you can sprint away, but you cannot jog away. Getting caught plays a full stop-motion lunge jumpscare — sting, red static, camera shake — before the ledger records you as `GUEST RETAINED`.
+
+<div align="center">
+<img src="docs/media/guest-retained.jpg" width="700" alt="FINAL CHECKOUT DECLINED — GUEST RETAINED"/>
+</div>
+
+---
+
+## ▍Architecture
+
+```mermaid
+flowchart TB
+    subgraph browser ["Browser — vanilla JS + three.js (no runtime deps beyond three)"]
+        MAIN["src/main.js<br/>integration hub"]
+        GHOST["src/ghost.js + src/noise.js<br/>entity senses & state machine"]
+        GAME["src/game/<br/>loop · generators · desk · HUD · judge panel"]
+        PRES["src/presage/<br/>consent · calibration · local DSP engine"]
+        S22C["src/stay22.js<br/>session · clues · questions · txn watcher"]
+        FB["src/data/royal-york-fallback.js<br/>zero-key snapshot"]
+    end
+    subgraph server ["Node server — :8787, zero npm deps"]
+        SRV["server/index.mjs + stay22-api.mjs<br/>key custody · sanitization · 5-min cache"]
+    end
+    API["☁️ Stay22 Direct Travel API"]
+    CAM["🎥🎙 getUserMedia<br/>(processed locally, never uploaded)"]
+
+    MAIN --> GHOST & GAME & PRES & S22C
+    S22C -->|"/api/session · /api/transactions"| SRV
+    S22C -.->|network failure| FB
+    SRV -->|STAY22_API_KEY stays here| API
+    PRES --> CAM
+    PRES -->|talking · breathing| GHOST
+    GAME -->|noise events| GHOST
+```
+
+**Security posture:** keys live only in the Node process. The browser receives sanitized sessions and transaction events reduced to `{id, campaign, at, simulated}` — never commissions, dates, devices, or customer fields.
+
+---
+
+## ▍Controls
+
+<table>
+<tr><td>
 
 | Key | Action |
 |---|---|
-| **WASD** | Move forward/back/strafe |
-| **Shift** | Run |
-| **Space** | Jump |
-| **C** or **Ctrl** | Crouch / go prone (hide) |
-| **E** | Interact (activate generators, submit front-desk answers) |
-| **Tab** | Open journal (view clues) |
-| **`` ` `` (Backquote)** | Judge panel (out-of-fiction diagnostics) |
-| **Mouse** | Look around (pointer lock while in-game) |
+| **W A S D** | Move |
+| **Shift** | Sprint (loud) |
+| **Space** | Jump (very loud landing) |
+| **C / Ctrl** | Crouch → hide under cover |
 
-## Architecture Map
+</td><td>
 
-| Module | Purpose |
+| Key | Action |
 |---|---|
-| `server/index.mjs` | Stay22 API proxy + transaction polling. Runs on :8787; handles all credential/key access. Vite proxies `/api` to this. |
-| `src/stay22.js` | Client-side session creation, clue/question generation, and transaction watcher. Fetches from `/api/session`, falls back to bundled snapshot on any network error. |
-| `src/data/royal-york-fallback.js` | Bundled Fairmont Royal York snapshot (rating ~8.8, 4 suppliers, ~$1050 CAD/2 nights). Used when no key or server unavailable. Clearly marked `live: false`. |
-| `src/presage/` | Consent, calibration, and live physiological signal processing. Three modes: real SmartSpectra (`presage`), local getUserMedia heuristics (`fallback`), or zero-capture (`reduced`). Always processes locally; nothing recorded or uploaded in fallback mode. |
-| `src/game/` | Game loop, world objects (4 Archive Generators), front-desk puzzle, HUD, screens, and judge panel. Reads ghost state + presage signals; drives entity and game progression. |
-| `src/ghost.js` | The entity: start-motion animated Concierge with two sight modes (blind/hunt). Reacts to talking, breathing, and noise via the noiseBus. Controlled by in-world events (generators, bookings, final checkout). |
-| `src/noise.js` | Event emitter for in-world sound: footsteps, running, landing, talking, generators, doors. Entity subscribes to this to determine alertness and investigation targets. |
-| `src/main.js` | Scene setup, three.js renderer, player controller, integration hub. Wires Presage → ghost signals, game state, Stay22 session, transaction watcher. |
-| `.env.example` | Template for API keys and server port. Copy to `.env` and fill in keys. Defaults ensure fallback mode works with no `.env` at all. |
-| `vite.config.js` | Proxy `/api` requests to the Stay22 server; dev server on :5173. |
-| `package.json` | Build scripts, dev dependencies (Vite, Puppeteer). No runtime npm dependencies except three.js. |
+| **E** | Interact (generators, front desk) |
+| **Tab** | Journal — recovered clues |
+| **`` ` ``** | Judge panel (out-of-fiction) |
+| **Mouse** | Look (pointer lock) |
 
-## Gameplay: How Stay22 Data and Presage Biometrics Affect Play
+</td></tr>
+</table>
 
-### Stay22 Session Creation
-When you enter the game, it fetches a real Fairmont Royal York property snapshot from the Stay22 Direct Travel API (or falls back to the bundled snapshot). This session is **locked for the duration of your playthrough** so that live price changes do not invalidate your puzzle answers. The session contains:
-- **Property:** Name, type, address, rating, review count, star classification
-- **Market:** Current 2-night total price, number of active suppliers, supplier names
-- **Policy:** Free-cancellation status, instant-booking status, guest capacity
+---
 
-### Archive Generators
-Four machines scattered around the hotel. Activate each one (hold E for ~2.5 seconds) to restore a category of real Stay22 data. Each generator:
-1. **Makes noise** that attracts the entity (if it can't see).
-2. **Reveals a clue** derived from the locked session data (corrupted-ledger voice).
-3. **Alters the environment** visually (signs restore, room markers appear, etc.).
+## ▍Judge panel & demo
 
-The four generators:
-- **A — Property Registry (Mezzanine):** Hotel name, type, location. Clues: "THE LEDGER REMEMBERS A NAME: THE FAIRMONT ROYAL YORK."
-- **B — Guest Ledger (Mezzanine):** Guest rating and review count. Clues: "GUESTS RATED THIS PLACE 8.8 OUT OF 10."
-- **C — Rate Engine (Convention Floor):** 2-night price and supplier count. Clues: "2 NIGHTS BILLED AT $1050 CAD."
-- **D — Reservation Rules (Convention Floor):** Cancellation policy, booking method, occupancy limit. Clues: "FREE CANCELLATION. INSTANT BOOKING. OCCUPANCY CEILING: 4."
+Press **`` ` ``** any time — a deliberately out-of-fiction diagnostics drawer: session `LIVE`/`FALLBACK` badge, presage mode with live signal meters, entity state and alertness, plus one-click **Simulate Booking (SIMULATED)**, **Force New Arrival**, **Complete All Generators**, **Skip To Desk**, and **Win**. Also scriptable via `window.__judge`.
 
-### Entity Behaviour and Presage Integration
-The Concierge starts with **both hands covering its eyes** — it cannot see. It hunts purely by sound:
-- **Talking** (detected via Presage or fallback audio heuristics): Strong awareness spike. The entity moves toward your position.
-- **Breathing intensity** (detected via Presage or fallback video temporal-diff): Gradual alertness increase when elevated or unstable. Rewards calmness, does not punish normal breathing.
-- **Footsteps and running:** In-world noise events that raise suspicion.
-- **Generator activation:** Loud noise that brings the entity investigating.
+The full 3–4 minute judge walkthrough — beat by beat, with honest live-vs-simulated framing — is in [**docs/demo-script.md**](docs/demo-script.md).
 
-**Presage modes:**
-- `presage` — Real SmartSpectra SDK (if `PRESAGE_API_KEY` provided and available). Camera-based talking, breathing, facial, and pulse detection with confidence metrics.
-- `fallback` — Local getUserMedia processing (always available, no key). Microphone RMS + speech-band energy → talking detection. Video temporal-diff in lower half + center-region face heuristic → breathing proxy. Low confidence, smoothed, safe. **Nothing recorded or uploaded.**
-- `reduced` — Player chooses "PROCEED UNREGISTERED" at consent. Zero capture; signals all zero with confidence 0. Game remains fully playable.
+---
 
-### New Arrival: Live Booking Event
-When a real attributed bookings appears in the Stay22 transaction ledger (or you simulate one), the entity's behaviour flips:
-1. A reception bell rings.
-2. A banner appears: "A NEW RESERVATION HAS ENTERED THE LEDGER / THE CONCIERGE CAN SEE"
-3. Lights flicker.
-4. **The entity uncovers its eyes** and gains **visual line-of-sight detection** for ~15 seconds.
-5. It moves faster (1.7× speed) and hunts directly.
-6. You must hide, close doors, break line of sight, or run to the exit.
-7. After ~15 seconds, the entity covers its eyes again and enters a brief cooldown.
+## ▍Verification
 
-**Simulated bookings** (for judging and demo purposes) trigger the exact same gameplay event but are clearly labelled `SIMULATED` in the judge panel. Real attributed bookings follow the same chain.
+Every claim above is executable:
 
-### Front-Desk Reconstruction
-After activating all 4 generators, return to the front desk (a curved reception counter on the Mezzanine). A corrupted property record awaits. You must submit **4 answers** derived from the clues you've gathered:
-1. **Hotel identity** — Select the correct hotel name.
-2. **Guest rating** — Choose the correct rating (e.g., "8.8 / 10").
-3. **Supplier count** — Enter how many booking channels feed this room (e.g., "4").
-4. **Policy** — Identify the cancellation + booking method rule.
-
-**Correct submission:**
-- "PROPERTY IDENTITY RESTORED / UNREGISTERED OCCUPANT DETECTED / FINAL CHECKOUT AUTHORIZED"
-- The exit glows and unlocks.
-- You must now reach the exit while the entity hunts with both sight and sound for the final time.
-
-**Incorrect submission:**
-- The desk bell rings.
-- The entity gains sight for a short (~8 second) hunt.
-- If the session's policy includes free cancellation, you get **one free retry** (on correct submission, the same message confirms this).
-- Otherwise, an incorrect answer puts you in immediate danger.
-
-### Escape and Victory
-Reach the unlocked exit while the entity hunts. Once you leave:
-- The corrupted hotel fades away.
-- You see a clean real-property card with the Fairmont Royal York's name, address, and rating.
-- An optional **Stay22 tracked booking link** is displayed with a clear affiliate disclosure.
-- Final message: "THE NIGHTMARE WAS FICTIONAL. THE HOTEL IS REAL. YOU RESTORED ITS NAME."
-
-## Consent, Privacy & Disclosures
-
-### Before Gameplay: Consent
-You must actively consent to camera and microphone use before the game begins. The consent screen clearly explains:
-- **What signals** the game detects: talking (via microphone/camera), breathing (via camera), facial expressions (via camera), and optional pulse (via camera).
-- **This is not a medical product.** Measurements are for gameplay and entertainment only. No health diagnoses or claims.
-- **Reduced-input mode:** If you don't want to use camera/mic, select "PROCEED UNREGISTERED" to play without any biometric capture. The game remains fully playable.
-- **Camera recording policy:** In fallback mode, no raw video or audio is recorded or uploaded. In Presage mode, processing happens according to the official SmartSpectra terms.
-
-### Calibration
-A darkened "GUEST BIOMETRIC REGISTRATION" screen confirms camera lighting, face visibility, and breathing signal quality before gameplay. Status indicators show:
-- **FACE SIGNAL:** Whether a face is visible in the frame.
-- **RESPIRATION FIELD:** Camera-detected breathing motion intensity.
-- **ILLUMINATION:** Ambient lighting adequacy.
-
-You are never asked to hold your breath or restrict normal breathing. The game rewards calmness and quiet, not unsafe physiology.
-
-### Stay22 Booking Transparency
-- **Booking links are affiliate links.** They carry a campaign ID so Stay22 can attribute the booking back to this experience. You'll earn a commission on eligible bookings.
-- **Booking is optional and does not affect gameplay.** You can win the game without ever clicking a booking link.
-- **No private transaction data is exposed to you or the game client.** The server only sends sanitized event notifications ("new arrival") with a transaction ID and campaign, not dates, pricing, or customer details.
-- **Real bookings vs. simulated bookings:** During judging or testing, you can trigger a labelled `SIMULATED` booking event via the judge panel to test the entity's hunt behavior without waiting for a real Stay22 transaction. The game clearly distinguishes between the two.
-
-### Horror Disclaimer
-**The entity, the corrupted hotel, and all supernatural events are fictional.** The Fairmont Royal York is a real, safe, well-reviewed hotel. The game is a creative entertainment layer on top of real Stay22 property data. No implication of actual hauntings, danger, or problems with the property.
-
-### Camera and Biometric Data
-- **Local processing in fallback mode:** Your camera and microphone feeds are processed only on your device in real-time. No recording. No upload. No persistent storage.
-- **Presage/SmartSpectra mode:** If you provide a Presage API key and the SmartSpectra SDK is available, camera processing follows the official SDK's privacy and data-handling terms.
-- **Active indicator:** A small dot in the corner of the HUD shows when the camera is actively capturing, so you always know.
-
-## What's Live vs. Simulated Without Keys
-
-### With zero `.env` (or blank keys)
-| Feature | Status | Details |
-|---|---|---|
-| **Stay22 property data** | Simulated | Uses bundled fallback snapshot (real Fairmont Royal York values, clearly labelled `live:false`). |
-| **Price/rating/suppliers** | Simulated | Hardcoded fallback values: 4.0-star, ~8.8 rating, $1050 CAD/2 nights, 4 suppliers. |
-| **Presage signals** | Fallback | Local audio + video heuristics; no SmartSpectra SDK. Camera feed processed locally only. |
-| **Booking detection** | Simulated | Use judge panel "Simulate Booking" button. Game responds exactly as if a real Stay22 transaction arrived. |
-| **Everything else** | Live | Game loop, entity behavior, generator interactions, front-desk puzzle, escape, HUD, all real. |
-
-### With `STAY22_API_KEY` and `STAY22_CAMPAIGN_ID`
-| Feature | Status | Details |
-|---|---|---|
-| **Stay22 property data** | Live | Real-time fetch from Stay22 Direct Travel API; labelled `live:true`. |
-| **Price/rating/suppliers** | Live | Current Fairmont Royal York booking records. |
-| **Presage signals** | Fallback or Presage | Presage if `PRESAGE_API_KEY` available; otherwise fallback. |
-| **Booking detection** | Live | Server polls Stay22 reporting endpoint; real attributed bookings trigger New Arrival events. Simulated bookings still available in judge panel for testing. |
-
-## Development
-
-### Build and test
 ```bash
-npm run build            # Production bundle
-npm run check:physics    # Collision detection verification
-npm run check:layout     # Room layout sanity check
-npm run check:stay22     # Start server; verify /api/session shape
-npm run check:entity     # Entity senses/state-machine pure-function tests
-node src/game/smoke-game.mjs      # Generator/desk/dedupe logic tests
-node src/presage/smoke-presage.mjs # Talking/breathing detector tests
-npm run shots             # Screenshot the built hotel from fixed camera spots
-npm run shots:flow        # Puppeteer run of the full judge-facing flow (landing
-                           # -> consent(reduced) -> HUD -> judge panel -> New
-                           # Arrival -> front desk -> win); saves to shots/flow/
+npm run build          # production bundle
+npm run check:physics  # 21 collision/movement checks
+npm run check:layout   # room layout vs the real floor-plan spec
+npm run check:entity   # 52 checks — senses, thresholds, state machine, LOS
+npm run check:stay22   # server contract + clue/question generation, keyless-pinned
+node src/game/smoke-game.mjs        # 12 checks — loop, dedupe, desk logic
+node src/presage/smoke-presage.mjs  # 17 checks — DSP, modes, engine handoff
+npm run shots:flow     # puppeteer plays the ENTIRE game headlessly —
+                       # landing → consent → hunts → desk → win — and
+                       # screenshots every beat to shots/flow/
 ```
 
-### Judge Panel (in-game, press Backquote)
-Out-of-fiction diagnostics:
-- **Session info:** Live/fallback badge, property name.
-- **Presage info:** Current mode, live signal meters (talking, breathing intensity, confidence).
-- **Entity info:** Current state (patrol, suspicious, pursuit, hunt, cooldown, finalHunt, exorcised), alertness level, eyes open/closed.
-- **Buttons:**
-  - **Simulate Booking (LABELLED SIMULATED):** Triggers a New Arrival event immediately.
-  - **Force New Arrival:** Same as simulate but overrides campaign/transaction validation.
-  - **Complete All Generators:** Marks all 4 generators as activated.
-  - **Skip To Desk:** Jump directly to front-desk phase.
-  - **Win:** Immediately trigger the victory sequence.
+The screenshots in this README are unedited output of `npm run shots:flow` running against the **live** Stay22 API.
 
-## Deployment & Monetization
+---
 
-The game is designed to work in three contexts:
+## ▍Honesty, consent & disclosures
 
-1. **Local development** (no keys): Bundled fallback, perfect for testing and judging.
-2. **Private streams/events** (with campaign ID): Creators get a unique `STAY22_CAMPAIGN_ID`; attributed bookings tied to their stream trigger live events on air.
-3. **Website embed** (affiliate mode): A creator hosts the game and shares a campaign-specific Stay22 booking link. Viewers can play for free; bookings earn the creator commission.
+- **The horror is fictional.** The Fairmont Royal York is a real, operating, well-reviewed hotel. Nothing depicted reflects any actual event or claim about the property.
+- **Booking links are disclosed affiliate links** carrying a campaign ID. Booking is optional and never affects gameplay.
+- **Not a medical product.** Biometrics are entertainment signals with confidence gating. The game never instructs breath-holding — it rewards calm.
+- **Privacy by construction.** Consent before any capture; reduced mode with zero capture stays fully playable; fallback processing is local-only with an always-visible capture indicator; keys and raw transaction data never reach the browser.
+- **Live vs. simulated is always labelled** — in the judge panel, in the session badge, and on every simulated booking event.
 
-In all cases:
-- The horror experience is fictional.
-- The booking link is disclosed as an affiliate link.
-- The player's decision to book is optional and does not affect winning.
-- The experience ends with a neutral, real-property card and an optional booking path.
+---
 
-## Contact & Attribution
+<div align="center">
 
-**The Concierge** is a hackathon project integrating:
-- **Stay22 Direct Travel API** (dev.stay22.com) for live property data and affiliate attribution.
-- **Presage SmartSpectra** (smartspectra.presagetech.com) for camera-based physiological sensing.
-- **Three.js** for 3D rendering.
-- **Vite** for bundling and dev server.
-- **Node.js** for the backend proxy.
+**Stay22** Direct Travel API — live inventory, attribution, transactions · **Presage** SmartSpectra — physiological sensing
+**three.js** · **Vite** · **Node.js**
 
-Authored by Dimural Murat. Built with Claude Code.
+Built from the Royal York's real meeting-floor plans — 1 unit = 1 foot.
+
+*Authored by Dimural Murat · Built with Claude Code*
+
+### `THE NIGHTMARE WAS FICTIONAL. THE HOTEL IS REAL.`
+
+</div>
