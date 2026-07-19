@@ -14,9 +14,10 @@ const STAND_EYE = 5.4;
 const PRONE_EYE = 1.55;
 
 export class Player {
-  constructor(camera, colliders, spawn) {
+  constructor(camera, colliders, spawn, hideVolumes = []) {
     this.camera = camera;
     this.colliders = colliders;
+    this.hideVolumes = hideVolumes; // thin tabletop slabs the player can crouch under
     this.pos = new THREE.Vector3(spawn.x, spawn.y, spawn.z); // feet position
     this.vel = new THREE.Vector3();
     this.yaw = spawn.yaw ?? 0;
@@ -29,6 +30,7 @@ export class Player {
     this.stepAccum = 0;
     this.landDip = 0;
     this.noise = 0; // 0..1 how much sound the player is making (the entity's future hearing)
+    this.concealed = false; // prone and tucked under a hide volume
     this.onFootstep = null; // (running: bool) => void
     this.onLand = null; // (fallSpeed: number) => void
     this.keys = new Set();
@@ -73,6 +75,17 @@ export class Player {
       }
     }
     return best;
+  }
+
+  // true if the footprint at (x,z) sits under a hide volume's slab at height y
+  hiddenUnder(x, y, z) {
+    const x0 = x - RADIUS, x1 = x + RADIUS;
+    const z0 = z - RADIUS, z1 = z + RADIUS;
+    const top = y + this.height;
+    for (const v of this.hideVolumes) {
+      if (x0 < v.x1 && x1 > v.x0 && z0 < v.z1 && z1 > v.z0 && top <= v.y0 + 0.05) return true;
+    }
+    return false;
   }
 
   update(dt, input) {
@@ -133,6 +146,9 @@ export class Player {
     // horizontal, one axis at a time, with step-up
     this.moveAxis('x', this.vel.x * dt);
     this.moveAxis('z', this.vel.z * dt);
+
+    // concealment: prone and tucked beneath a hideable surface
+    this.concealed = this.prone && this.hiddenUnder(this.pos.x, this.pos.y, this.pos.z);
 
     // ground snap while walking down steps
     if (this.grounded && this.vel.y <= 0) {

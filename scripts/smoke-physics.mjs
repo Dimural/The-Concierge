@@ -47,8 +47,8 @@ function simulate(player, input, seconds) {
   const dt = 1 / 60;
   for (let i = 0; i < seconds * 60; i++) player.update(dt, input);
 }
-function fresh(x, y, z, yaw) {
-  return new Player(camera, colliders, { x, y, z, yaw });
+function fresh(x, y, z, yaw, hideVolumes = []) {
+  return new Player(camera, colliders, { x, y, z, yaw }, hideVolumes);
 }
 const idle = () => ({ keys: new Set(), jumpQueued: false });
 const forward = () => ({ keys: new Set(['KeyW']), jumpQueued: false });
@@ -134,6 +134,29 @@ const forward = () => ({ keys: new Set(['KeyW']), jumpQueued: false });
     const p = fresh(cx, chair.y0, cz, 0);
     check(!!p.collides(p.pos.x, p.pos.y, p.pos.z), 'a chair position collides with its seat/leg block');
   }
+}
+
+// 10. crouching under a table slab is open and reads as concealed; you can't
+// stand up there
+{
+  const v = props.hideVolumes[0];
+  const cx = (v.x0 + v.x1) / 2 + 2.0, cz = (v.z0 + v.z1) / 2, floorY = v.y0 - 2.2;
+  const p = fresh(cx, floorY, cz, 0, props.hideVolumes);
+  simulate(p, idle(), 1);
+  p.toggleProne();
+  simulate(p, idle(), 0.5);
+  check(!p.collides(p.pos.x, p.pos.y, p.pos.z), 'prone player fits under the table slab');
+  check(p.concealed, 'prone player under a table reads as concealed');
+  check(!p.headroom(5.9), 'cannot stand up under the tabletop slab (blocked)');
+}
+
+// 11. concealment is false out in the open
+{
+  const p = fresh(SPAWN.x, SPAWN.y, SPAWN.z, 0, props.hideVolumes);
+  simulate(p, idle(), 1);
+  p.toggleProne();
+  simulate(p, idle(), 1);
+  check(!p.concealed, 'prone in the open corridor is not concealed');
 }
 
 if (failures) { console.error(`${failures} failure(s)`); process.exit(1); }
