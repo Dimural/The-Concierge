@@ -71,6 +71,9 @@ class Game {
     this._timers = [];
     this._deskForm = null;
     this._presageOwnIndicator = false;
+    this._lastGhostState = null; // for edge-triggering the near-miss stinger
+    this._dreadTimer = 0; // heartbeat cadence during finalHunt
+    this._camSwayT = 0;
 
     this._buildWorld();
 
@@ -160,7 +163,7 @@ class Game {
   }
 
   interact() {
-    if (this._state === 'won' || this._state === 'lost' || this._state === 'desk') return;
+    if (this._state === 'won' || this._state === 'lost' || this._state === 'caught' || this._state === 'desk') return;
     this._eHeld = true;
     this._tryDiscreteInteract();
   }
@@ -257,7 +260,12 @@ class Game {
 
     if (this.ghost) this.hud.setEyesHint(!!this.ghost.eyesOpen);
 
-    // tick one-off visual effects (generator flicker / restored-signage sprites)
+    this._updateScareEffects(dt);
+
+    // tick one-off visual effects (generator flicker / restored-signage
+    // sprites / the catch jumpscare's camera shake) — runs regardless of
+    // state so the jumpscare still plays out after a catch has already
+    // moved _state off 'explore'/'finalHunt'
     this._effects = this._effects.filter((fx) => fx.update(dt));
 
     if (this._state !== 'explore' && this._state !== 'finalHunt') return;
@@ -268,6 +276,86 @@ class Game {
     if (this._state === 'finalHunt' && this._exitUnlocked && this.exitPos) {
       if (dist2D(this.player.pos, this.exitPos) < EXIT_RADIUS) this._win();
     }
+  }
+
+  // -------------------------------------------------------- scares/dread
+
+  // Near-miss stinger (hunt/pursuit kicking off close to the player) and
+  // the finalHunt sustained-dread heartbeat/vignette/camera-sway. Skipped
+  // entirely while a catch jumpscare is already owning the camera/sfx, or
+  // once the run has ended, so effects never fight each other.
+  _updateScareEffects(dt) {
+    if (!this.ghost || !this.ghost.object) return;
+    const blocked = this._state === 'caught' || this._state === 'lost' || this._state === 'won';
+    const st = this.ghost.state;
+    const d = dist2D(this.player.pos, this.ghost.object.position);
+
+    if (st !== this._lastGhostState) {
+      if (!blocked && (st === 'hunt' || st === 'pursuit') && d <= 25) {
+        sfx.nearMissSting();
+        this.hud.pulse();
+      }
+      this._lastGhostState = st;
+    }
+
+    if (!blocked && st === 'finalHunt') {
+      const proximity = Math.max(0, Math.min(1, 1 - d / 70)); // 0 far, 1 right on top of the player
+      this._dreadTimer -= dt;
+      if (this._dreadTimer <= 0) {
+        const bpm = 46 + proximity * 78; // heartbeat speeds up as it closes the distance
+        this._dreadTimer = 60 / bpm;
+        sfx.heartbeatPulse(0.35 + proximity * 0.9);
+      }
+      this.hud.setDread(0.12 + proximity * 0.88);
+      this._camSwayT += dt * (1.3 + proximity * 2.6);
+      this.camera.rotation.z += Math.sin(this._camSwayT) * (0.01 + proximity * 0.03);
+      this.camera.rotation.x += Math.sin(this._camSwayT * 0.7) * (0.004 + proximity * 0.012);
+    } else {
+      this.hud.setDread(0);
+      this._dreadTimer = 0;
+      this._camSwayT = 0;
+    }
+  }
+
+  // The catch jumpscare: a violent, scripted beat between "you got caught"
+  // and the lose screen. Orchestrates across the pieces each module already
+  // owns — ghost.js plays the lunge (entity animation), sfx.js supplies the
+  // sting, hud.js owns the flash overlay (DOM/CSS, like every other screen
+  // effect) — and drives the camera directly, since createGame() is already
+  // handed the camera reference (no need to tangle main.js in for this).
+  _playCatchJumpscare(onDone) {
+    sfx.catchSting();
+    this.hud.flashJumpscare(1300);
+    this.ghost?.playCatchLunge?.(this.player.pos);
+
+    let t = 0;
+    const DUR = 1.3;
+    this._effects.push({
+      update: (dt) => {
+        t += dt;
+        // keep the camera snapped onto the entity's head as it lunges in
+        const gp = this.ghost?.object?.position;
+        if (gp) {
+          const look = gp.clone();
+          look.y += 4.4;
+          this.camera.lookAt(look);
+        }
+        // violent, jerky shake — quantized like the entity's own stop-motion
+        // gait, but rougher and faster, easing out over the back half so it
+        // settles just before the lose screen fades in
+        const decay = Math.max(0, 1 - Math.max(0, t - DUR * 0.35) / (DUR * 0.65));
+        const qt = Math.floor(t * 22) / 22;
+        this.camera.rotation.x += (Math.sin(qt * 71.3) + Math.sin(qt * 27.1)) * 0.05 * decay;
+        this.camera.rotation.y += (Math.sin(qt * 61.7) + Math.sin(qt * 18.9)) * 0.05 * decay;
+        this.camera.rotation.z += Math.sin(qt * 83.4) * 0.03 * decay;
+        this.camera.position.x += (Math.random() - 0.5) * 0.5 * decay;
+        this.camera.position.y += (Math.random() - 0.5) * 0.35 * decay;
+        this.camera.position.z += (Math.random() - 0.5) * 0.5 * decay;
+
+        if (t >= DUR) { onDone?.(); return false; }
+        return true;
+      },
+    });
   }
 
   _updateInteractionPrompt(dt) {
@@ -390,16 +478,25 @@ class Game {
   // -------------------------------------------------------------- lose/retry
 
   handleCatch() {
-    if (this._state === 'won' || this._state === 'lost') return;
-    this._state = 'lost';
+    if (this._state === 'won' || this._state === 'lost' || this._state === 'caught') return;
+    // 'caught' is a short transitional state (not part of the documented
+    // state union) that only exists to own the jumpscare beat between the
+    // catch and the lose screen; see _playCatchJumpscare.
+    this._state = 'caught';
     this._deskForm?.close();
     this._deskForm = null;
     this.hud.setPrompt(null);
-    this.screens.showLose(() => {
-      this.player.pos.set(SPAWN.x, SPAWN.y, SPAWN.z);
-      this.player.vel.set(0, 0, 0);
-      this._state = this._deskDone ? 'finalHunt' : 'explore';
-      this.onRetry?.();
+    this._playCatchJumpscare(() => {
+      // something else (a judge-panel action) already moved the game on
+      // while the jumpscare was mid-flight — don't stomp it with 'lost'
+      if (this._state !== 'caught') return;
+      this._state = 'lost';
+      this.screens.showLose(() => {
+        this.player.pos.set(SPAWN.x, SPAWN.y, SPAWN.z);
+        this.player.vel.set(0, 0, 0);
+        this._state = this._deskDone ? 'finalHunt' : 'explore';
+        this.onRetry?.();
+      });
     });
   }
 
@@ -432,7 +529,7 @@ class Game {
 
   _skipToDesk() {
     this._completeAllGenerators();
-    if (this._state !== 'won' && this._state !== 'lost') this._interactDesk();
+    if (this._state !== 'won' && this._state !== 'lost' && this._state !== 'caught') this._interactDesk();
   }
 }
 

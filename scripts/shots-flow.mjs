@@ -206,6 +206,21 @@ async function main() {
     await shot(page, '08-entity-eyes-open-hunt');
   }, page);
 
+  // If the entity caught the player during the hunt sleep above, the catch
+  // jumpscare (ghost.js's scripted lunge + game/index.js's camera shake/
+  // flash/sting, ~1.3s) is playing right now, ahead of the lose screen —
+  // grab a screenshot of it as a visual sanity check that it reads as
+  // intense, not broken, before it resolves.
+  await step('08a-jumpscare-if-triggered', async () => {
+    const caughtNow = await page.evaluate(() => window.__concierge?.game?.state === 'caught');
+    if (caughtNow) {
+      await sleep(250); // let the shake/flash be mid-flight, not the very first frame
+      await shot(page, '08a-catch-jumpscare');
+    } else {
+      console.log('     (no catch during the hunt window this run; jumpscare not captured)');
+    }
+  }, page);
+
   // The player never moves in this script, and the eyes-open New Arrival
   // hunt actively chases with LOS — a stationary player standing right next
   // to where the entity spawned is very likely to get caught (repeatedly,
@@ -216,6 +231,14 @@ async function main() {
   // sight range once the hunt shot is captured, then recover from a lose
   // screen (possibly more than once) if one snuck in before the teleport.
   await step('08b-clear-of-danger', async () => {
+    // 'caught' is the transitional jumpscare state between the catch and
+    // 'lost' (see game/index.js handleCatch) — wait it out first so the
+    // 'lost' check below isn't racing the ~1.3s jumpscare still in flight.
+    await page.waitForFunction(
+      () => window.__concierge?.game?.state !== 'caught',
+      { timeout: 4000 },
+    ).catch(() => {});
+
     await page.evaluate(() => {
       const { player } = window.__concierge;
       player.pos.set(340, 0, 33); // corridor A — far mezzanine hallway, well >90ft from spawn/front desk

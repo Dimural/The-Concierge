@@ -17,6 +17,7 @@ import {
   CATCH_DIST,
   PURSUIT_LOUDNESS,
   SUSPICIOUS_ALERT,
+  ALERTNESS_DECAY_PER_SEC,
 } from '../src/ghost.js';
 
 let failures = 0;
@@ -31,7 +32,9 @@ check(typeof noiseBus.emit === 'function' && typeof noiseBus.subscribe === 'func
 check(ENTITY_RADIUS === 1.0, 'entity collision radius is exactly 1.0 per the brief');
 check(SIGHT_RANGE === 90, 'sight range is exactly 90ft per the brief');
 check(CATCH_DIST === 3.0, 'catch distance is exactly 3.0ft per the brief');
-check(PURSUIT_LOUDNESS === 0.6, 'pursuit loudness threshold is exactly 0.6 per the brief');
+check(PURSUIT_LOUDNESS === 0.35, 'pursuit loudness threshold was lowered to 0.35 (hostility pass) so quieter/closer sounds provoke pursuit sooner');
+check(ALERTNESS_DECAY_PER_SEC === 0.02, 'alertness decay was slowed to 0.02/s (hostility pass) so repeated small noises stack up instead of resetting');
+check(ALERTNESS_DECAY_PER_SEC < 0.05, 'alertness now decays slower than the old 0.05/s baseline');
 
 // --- noise bus --------------------------------------------------------------
 {
@@ -50,6 +53,16 @@ check(PURSUIT_LOUDNESS === 0.6, 'pursuit loudness threshold is exactly 0.6 per t
   const r = hearingRadius(1.2);
   check(hearingFalloff(r - 1, 1.2) > 0 && hearingFalloff(r + 1, 1.2) === 0, 'falloff crosses zero at hearingRadius(loudness)');
   check(hearingRadius(1.2) > hearingRadius(0.1), 'louder sounds are heard further away');
+
+  // hostility pass: a running footstep (raw loudness 0.55, per src/main.js's
+  // player.onFootstep wiring) should cross the pursuit threshold from a
+  // meaningful distance, not just point-blank — while a single walking
+  // footstep (0.16) should never spike straight to pursuit on its own, even
+  // heard from right next to the entity (it should build alertness instead).
+  const runningEffAt30ft = 0.55 * hearingFalloff(30, 0.55);
+  check(runningEffAt30ft > PURSUIT_LOUDNESS, `running footsteps heard from 30ft (eff=${runningEffAt30ft.toFixed(3)}) cross the pursuit threshold`);
+  const walkingEffAt0ft = 0.16 * hearingFalloff(0, 0.16);
+  check(walkingEffAt0ft < PURSUIT_LOUDNESS, `a single walking footstep, even at 0ft (eff=${walkingEffAt0ft.toFixed(3)}), never alone triggers pursuit`);
 }
 
 // --- segment vs AABB / line of sight ----------------------------------------
@@ -91,8 +104,9 @@ check(PURSUIT_LOUDNESS === 0.6, 'pursuit loudness threshold is exactly 0.6 per t
   check(Math.abs(lowConfBreath - updateAlertness(0.2, 1, {})) < 1e-9, 'breathing below the 0.5 confidence gate has zero influence');
 
   const highConfBreath = updateAlertness(0.2, 1, { breathingIntensity: 1, breathingConfidence: 1 });
-  check(highConfBreath > 0.2 - 0.05 * 1, 'high-confidence breathing nudges alertness up, not just decays it');
-  check(highConfBreath - (0.2 - 0.05 * 1) < 0.06, 'breathing alone raises alertness slowly, never an instant spike');
+  const baseline = 0.2 - ALERTNESS_DECAY_PER_SEC * 1;
+  check(highConfBreath > baseline, 'high-confidence breathing nudges alertness up, not just decays it');
+  check(highConfBreath - baseline < 0.06, 'breathing alone raises alertness slowly, never an instant spike');
 
   check(updateAlertness(1, 1, { noiseContribution: 5 }) <= 1, 'alertness never exceeds 1');
   check(updateAlertness(0, 1, {}) >= 0, 'alertness never drops below 0');

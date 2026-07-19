@@ -46,15 +46,27 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
 // --- tunables (documented assumptions where the brief left room; exported
 // so the smoke test can assert against the real thresholds, not copies) ----
-const BASE_SPEED = 3.4;              // blind patrol/investigate walk speed, ft/s
-const PURSUIT_MULT = 1.5;            // blind but urgent — assumption, brief only pins hunt speed
-const HUNT_MULT = 1.7;               // eyes-open speed, exact per brief
+const BASE_SPEED = 3.4;              // blind patrol/investigate walk speed, ft/s — untouched,
+                                      // keeps the stealth pacing fair even after the hostility pass below
+const PURSUIT_MULT = 2.2;            // blind but urgent — raised from 1.5 (playtest feedback: a heard
+                                      // lead used to be a saunter at 5.1ft/s; now it's a real threat)
+const HUNT_MULT = 2.9;               // eyes-open speed — raised from 1.7. At the old multiplier
+                                      // (5.78ft/s) a sighted hunt was SLOWER than the player's own walk
+                                      // (6.8ft/s); now it's faster than a walk but still outrunnable by
+                                      // sprinting (13ft/s), so breaking line-of-sight still matters
 export const ENTITY_RADIUS = 1.0;    // exact per brief ("radius 1.0")
 const ENTITY_HEIGHT = 6.4;           // approx figure height, for axis-slide collision only
 export const SIGHT_RANGE = 90;       // ft, exact per brief
 export const CATCH_DIST = 3.0;       // exact per brief
-export const PURSUIT_LOUDNESS = 0.6; // exact per brief ("loud noise (>0.6)")
+export const PURSUIT_LOUDNESS = 0.35; // lowered from 0.6 (playtest feedback: too quiet for too long).
+                                      // A running footstep (raw loudness 0.55) now crosses this on its
+                                      // own from ~35ft away once distance falloff is applied; a single
+                                      // walking footstep (0.16) never does, by design — it should build
+                                      // alertness, not spike straight to pursuit
 export const SUSPICIOUS_ALERT = 0.3; // assumption: alertness threshold to start investigating
+export const ALERTNESS_DECAY_PER_SEC = 0.02; // lowered from 0.05 — alertness now lingers roughly
+                                      // 2.5x longer, so a string of small/quiet noises stacks up toward
+                                      // "suspicious" instead of fully resetting between them
 const LOS_GRACE = 2.0;               // seconds a just-lost sightline still counts for the catch rule
 
 // --- grimy canvas textures for the uniform and skin ------------------------
@@ -411,7 +423,7 @@ export function updateAlertness(alertness, dt, input = {}) {
     noiseContribution = 0,
     breathingIntensity = 0,
     breathingConfidence = 0,
-    decayPerSec = 0.05,
+    decayPerSec = ALERTNESS_DECAY_PER_SEC,
   } = input;
   let a = alertness - decayPerSec * dt + noiseContribution;
   if (breathingConfidence >= 0.5) {
@@ -518,6 +530,17 @@ export function createGhost(scene, colliders = []) {
   let caught = false;
   let talkTimer = 0; // seconds of continuous confident talking, for "sustained" talk
 
+  // --- catch-lunge (jumpscare) — a short, scripted override of normal
+  // movement/pose triggered by the integrator right after a catch. Lives
+  // here (not in src/game/) because it's entity animation, same as every
+  // other pose in this file; src/game/ only orchestrates the camera/sfx/
+  // screen side of the jumpscare around it (see game/index.js handleCatch).
+  const LUNGE_DUR = 0.85;
+  let lunging = false;
+  let lungeT = 0;
+  let lungeFrom = null;
+  let lungeTo = null;
+
   const signals = { talking: false, talkingConfidence: 0, breathingIntensity: 0, breathingConfidence: 0 };
   const pendingNoise = [];
   const unsubscribeNoise = noiseBus.subscribe((ev) => pendingNoise.push(ev));
@@ -587,7 +610,30 @@ export function createGhost(scene, colliders = []) {
     get state() { return behavior; },
     get alertness() { return alertness; },
     get eyesOpen() { return behavior === 'hunt' || behavior === 'finalHunt'; },
+    get lungeActive() { return lunging; },
+    // 0..1 through the catch-lunge — lets the integrator time camera/sfx
+    // beats (e.g. a shake that peaks mid-lunge) against the actual pose
+    get lungeProgress() { return lunging ? clamp01(lungeT / LUNGE_DUR) : 1; },
     onCatch: null,
+
+    // Kicks off the scripted catch jumpscare: hands rip away from the face,
+    // the whole figure snaps toward and just past the player in a handful of
+    // jerky, quantized steps (stop-motion, but fast and violent instead of
+    // the usual slow shamble). Overrides normal update() for LUNGE_DUR
+    // seconds; call once, right when the integrator's onCatch fires.
+    playCatchLunge(playerPos) {
+      lunging = true;
+      lungeT = 0;
+      lungeFrom = { x: root.position.x, z: root.position.z };
+      const dx = (playerPos?.x ?? root.position.x) - root.position.x;
+      const dz = (playerPos?.z ?? root.position.z) - root.position.z;
+      const d = Math.hypot(dx, dz) || 1;
+      const overshoot = 1.6; // ft past the player, so the torso reads as pressed into the camera
+      lungeTo = {
+        x: (playerPos?.x ?? root.position.x) + (dx / d) * overshoot,
+        z: (playerPos?.z ?? root.position.z) + (dz / d) * overshoot,
+      };
+    },
 
     applySignals(sig = {}) {
       signals.talking = !!sig.talking;
@@ -613,6 +659,41 @@ export function createGhost(scene, colliders = []) {
 
       clockT += dt;
       animT += dt;
+
+      // catch-lunge fully overrides normal movement/pose/catch-detection for
+      // its short duration — the integrator has already registered the
+      // catch (onCatch already fired before this was triggered), this is
+      // purely the scripted "lunge into camera" visual on top of it
+      if (lunging) {
+        pendingNoise.length = 0; // don't let noise pile into a post-lunge alertness spike
+        lungeT += dt;
+        const p = clamp01(lungeT / LUNGE_DUR);
+        // jerky, quantized steps — coarser/faster than the usual 8fps
+        // shamble, so the snap reads as violent rather than merely stiff
+        const qp = quant(p, 12);
+        const ease = qp * qp; // accelerating into the player, not a smooth glide
+        root.position.x = lungeFrom.x + (lungeTo.x - lungeFrom.x) * ease;
+        root.position.z = lungeFrom.z + (lungeTo.z - lungeFrom.z) * ease;
+        turnToward(lungeTo.x - root.position.x, lungeTo.z - root.position.z, 10, dt);
+        root.rotation.y = Math.round(yaw / 0.12) * 0.12;
+
+        const q2 = quant(p, 10);
+        torso.rotation.x = -0.4 - q2 * 0.45; // lurching forward hard, breaking the usual lean
+        torso.rotation.z = Math.sin(q2 * 23) * 0.1;
+        headG.rotation.x = -0.35 - q2 * 0.55;
+        headG.rotation.z = Math.sin(q2 * 19) * 0.22; // violent head jitter
+        arms.L.rotation.x = -1.9; arms.R.rotation.x = -1.9; // hands already torn away from the face
+        arms.L.rotation.z = 0.5; arms.R.rotation.z = -0.5;
+        hands.L.position.set(-0.5, -0.9, -0.3);
+        hands.R.position.set(0.5, -0.9, -0.3);
+        eyes.L.visible = true;
+        eyes.R.visible = true;
+        eyes.L.material.emissiveIntensity = 2.6 + Math.sin(q2 * 31) * 2.4;
+
+        if (lungeT >= LUNGE_DUR) lunging = false;
+        return;
+      }
+
       const distToPlayer = Math.hypot(root.position.x - player.pos.x, root.position.z - player.pos.z);
       const audible = Math.max(0, 1 - distToPlayer / 75);
 
@@ -625,7 +706,9 @@ export function createGhost(scene, colliders = []) {
         const dist = Math.hypot(ev.x - root.position.x, ev.z - root.position.z);
         const eff = ev.loudness * hearingFalloff(dist, ev.loudness);
         if (eff <= 0) continue;
-        alertBump += eff * 0.6;
+        // raised from 0.6 — even quiet, nearby noises should visibly nudge
+        // alertness now, not just the loud ones that already force pursuit
+        alertBump += eff * 1.15;
         if (eff > effectiveLoudness) { effectiveLoudness = eff; heardTarget = ev; }
       }
       pendingNoise.length = 0;

@@ -98,6 +98,49 @@ const CSS = `
 }
 .cg-toast.cg-in { opacity: 1; }
 
+/* ------------------------ dread / jumpscare overlays -------------------- */
+/* continuous vignette pulse driven by JS (box-shadow set per-frame from
+   entity distance during finalHunt) -- stays under the flash/screens */
+.cg-dread { position: absolute; inset: 0; z-index: 21; pointer-events: none; }
+.cg-dread[hidden] { display: none; }
+
+/* the shared flash surface: near-miss pulse (subtle) and the catch
+   jumpscare (violent, held longer) both drive this element, just with
+   different classes/durations. Sits above the HUD and the desk form but
+   still under the win/lose modal screens, which fade in after the catch
+   jumpscare has already finished. Grain layer is inline SVG feTurbulence --
+   no asset files -- stepped with the rest of the flash keyframes so the
+   static reads as jerky/broken instead of a smooth video-style glitch. */
+.cg-flash {
+  position: absolute; inset: 0; z-index: 95; pointer-events: none; opacity: 0;
+  background:
+    linear-gradient(rgba(140,10,8,0.6), rgba(140,10,8,0.6)),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: cover, 140px 140px;
+  mix-blend-mode: screen;
+}
+.cg-flash[hidden] { display: none; }
+.cg-flash.cg-flash-pulse { animation: cg-flash-pulse 0.42s steps(3, end) 1; }
+@keyframes cg-flash-pulse {
+  0% { opacity: 0; }
+  30% { opacity: 0.4; }
+  60% { opacity: 0.08; }
+  100% { opacity: 0; }
+}
+.cg-flash.cg-flash-jumpscare { animation: cg-flash-jumpscare 1.3s steps(2, end) 1; }
+@keyframes cg-flash-jumpscare {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  14% { opacity: 0.35; }
+  22% { opacity: 0.95; }
+  32% { opacity: 0.2; }
+  44% { opacity: 0.8; }
+  58% { opacity: 0.15; }
+  72% { opacity: 0.55; }
+  88% { opacity: 0.2; }
+  100% { opacity: 0; }
+}
+
 /* ------------------------------ screens -------------------------------- */
 .cg-screen {
   position: fixed; inset: 0; z-index: 40; display: flex;
@@ -185,6 +228,7 @@ const CSS = `
 .cg-judge-actions button:hover { background: #222; border-color: #555; }
 
 @media (prefers-reduced-motion: reduce) {
-  .cg-eyes, .cg-capture-dot, .cg-arrival-banner.cg-flash { animation: none; }
+  .cg-eyes, .cg-capture-dot, .cg-arrival-banner.cg-flash,
+  .cg-flash.cg-flash-pulse, .cg-flash.cg-flash-jumpscare { animation: none; }
 }
 `;

@@ -22,6 +22,8 @@ export function createHud() {
     </div>
     <div class="cg-arrival-banner" id="cg-arrival-banner" hidden></div>
     <div class="cg-toast" id="cg-toast" hidden></div>
+    <div class="cg-dread" id="cg-dread" hidden></div>
+    <div class="cg-flash" id="cg-flash" hidden></div>
   `;
   document.body.appendChild(root);
 
@@ -33,6 +35,8 @@ export function createHud() {
   const journalList = root.querySelector('#cg-journal-list');
   const arrivalBanner = root.querySelector('#cg-arrival-banner');
   const toastEl = root.querySelector('#cg-toast');
+  const dreadEl = root.querySelector('#cg-dread');
+  const flashEl = root.querySelector('#cg-flash');
 
   let lastObjective = '';
 
@@ -113,16 +117,50 @@ export function createHud() {
     }, ms);
   }
 
+  // brief subtle screen pulse -- a hunt/pursuit kicking off close by
+  let flashTimer = null;
+  function pulse() {
+    flashEl.hidden = false;
+    flashEl.classList.remove('cg-flash-jumpscare', 'cg-flash-pulse');
+    void flashEl.offsetWidth; // restart the animation even if one is already running
+    flashEl.classList.add('cg-flash-pulse');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => { flashEl.hidden = true; }, 450);
+  }
+
+  // the catch jumpscare's red/static flash -- violent, held longer
+  function flashJumpscare(ms = 1300) {
+    flashEl.hidden = false;
+    flashEl.classList.remove('cg-flash-jumpscare', 'cg-flash-pulse');
+    void flashEl.offsetWidth;
+    flashEl.classList.add('cg-flash-jumpscare');
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => { flashEl.hidden = true; }, ms);
+  }
+
+  // continuous vignette pulse for the finalHunt dread escalation, intensity
+  // 0..1 driven every frame by the game loop from the entity's distance
+  function setDread(intensity) {
+    const v = Math.max(0, Math.min(1, intensity));
+    if (v <= 0.01) { dreadEl.hidden = true; return; }
+    dreadEl.hidden = false;
+    const spread = 26 + v * 130;
+    const blur = 50 + v * 150;
+    dreadEl.style.boxShadow = `inset 0 0 ${blur}px ${spread}px rgba(120,10,8,${(0.16 + v * 0.4).toFixed(3)})`;
+  }
+
   function destroy() {
     clearInterval(objectiveEl._cgTimer);
     clearTimeout(bannerTimer);
     clearTimeout(toastTimer);
+    clearTimeout(flashTimer);
     root.remove();
   }
 
   return {
     root, setObjective, setPrompt, toggleJournal, setJournalOpen,
     addClue, setEyesHint, setCapture, showBanner, toast, destroy,
+    pulse, flashJumpscare, setDread,
   };
 }
 
