@@ -124,5 +124,17 @@ const forward = () => ({ keys: new Set(['KeyW']), jumpQueued: false });
   check(thin, 'every hideVolume is a thin slab (<1ft tall)');
 }
 
+// 9. freestanding chairs are now solid (previously zero collision) — find one
+// by its known footprint/height signature and confirm it registers a hit
+{
+  const chair = props.colliders.find((c) => Math.abs((c.x1 - c.x0) - 1.6) < 0.01 && Math.abs((c.y1 - c.y0) - 1.5) < 0.01);
+  check(!!chair, 'an upright chair collider exists');
+  if (chair) {
+    const cx = (chair.x0 + chair.x1) / 2, cz = (chair.z0 + chair.z1) / 2;
+    const p = fresh(cx, chair.y0, cz, 0);
+    check(!!p.collides(p.pos.x, p.pos.y, p.pos.z), 'a chair position collides with its seat/leg block');
+  }
+}
+
 if (failures) { console.error(`${failures} failure(s)`); process.exit(1); }
 console.log('physics smoke test OK');

@@ -98,11 +98,12 @@ export function buildProps(floors, mats) {
         }
       }
     }
-    // stacked chairs along the west wall
+    // stacked chairs along the west wall (collision stays one blob per stack —
+    // it's storage, not furniture meant to be crawled into or mantled onto)
     for (let s = 0; s < 3; s++) {
       const sx = r.x + 2.2, sz = r.z + 6 + s * 5;
       if (sz > r.z + r.d - 3) break;
-      for (let h = 0; h < 5; h++) chairT.push({ x: sx, y: r.y + h * 0.62, z: sz, ry: 0.12 * h });
+      for (let h = 0; h < 5; h++) chairT.push({ x: sx, y: r.y + h * 0.62, z: sz, ry: 0.12 * h, stacked: true });
       colliders.push(aabb(sx - 1, sx + 1, r.y, r.y + 4.5, sz - 1, sz + 1));
     }
   }
@@ -200,6 +201,15 @@ export function buildProps(floors, mats) {
     tile.rotation.set((rand() - 0.5) * 0.3, rand() * Math.PI, (rand() - 0.5) * 0.3);
     tile.receiveShadow = true;
     group.add(tile);
+  }
+
+  // freestanding chairs are now solid: a block up to seat height for upright
+  // ones, lower for knocked-over ones (rx === PI/2), skipping storage stacks
+  for (const t of chairT) {
+    if (t.stacked) continue;
+    const toppled = t.rx === Math.PI / 2;
+    const h = toppled ? 0.9 : 1.5;
+    colliders.push(aabb(t.x - 0.8, t.x + 0.8, t.y, t.y + h, t.z - 0.8, t.z + 0.8));
   }
 
   // merge the furniture batches
